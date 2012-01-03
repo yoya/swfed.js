@@ -30,6 +30,22 @@ var Bitstream = function() {
 	this.byte_offset = bo + n;
 	return ret;
     }
+    this.getDataUntil = function(delim) {
+	this.byteAlign();
+	var bo = this.byte_offset;
+	var delim_offset = this.data.indexOf(delim, bo);
+	if (delim_offset === -1) {
+	    var n = this.data.length - bo;
+	} else {
+	    var n = delim_offset - bo;
+	}
+	ret = this.data.substr(bo, n);
+	this.byte_offset = bo + n;
+	if ((delim_offset !== -1) && (delim.length > 0)) {
+	    this.byte_offset = delim.length;
+	}
+	return ret;
+    }
     this.getUI8 = function() {
 	this.byteAlign();
 	return this.data.charCodeAt(this.byte_offset++) & 0xff;
