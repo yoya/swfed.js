@@ -15,9 +15,9 @@ var SWFRECT = function(bs) {
         var XmaxBits = bs.need_bits_signed(this.Xmax);
         var YminBits = bs.need_bits_signed(this.Ymin);
         var YmaxBits = bs.need_bits_signed(this.Ymax);
-        var NBits = (XminBits > XmaxBits)?XminBits:XmaxBits;
-        NBits = (NBits > YminBits)?NBits:YminBits;
-        NBits = (NBits > YmaxBits)?NBits:YmaxBits;
+        var Nbits = (XminBits > XmaxBits)?XminBits:XmaxBits;
+        Nbits = (Nbits > YminBits)?Nbits:YminBits;
+        Nbits = (Nbits > YmaxBits)?Nbits:YmaxBits;
 	bs.putUIBits(Nbits, 5);
 	bs.putSIBits(this.Xmin, Nbits);
         bs.putSIBits(this.Xmax, Nbits);
