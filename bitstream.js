@@ -175,6 +175,31 @@ var Bitstream = function() {
     }
 
     /*
+     * need
+     */
+
+    this.need_bits_unsigned = function(n) {
+        for (var i = 0 ; n ; i++) {
+            n >>= 1;
+        }
+        return i;
+    }
+    this.need_bits_signed = function(n) {
+        if (n < -1) {
+            n = -1 - n;
+        }
+        if (n >= 0) {
+            for (i = 0 ; n ; i++) {
+                n >>= 1;
+            }
+            ret = 1 + i;
+        } else { // n == -1
+            ret = 1;
+        }
+        return ret;
+    }
+    
+    /*
      * seek
      */
     this.setOffset = function(byte_offset, bit_offset) {
