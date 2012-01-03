@@ -61,6 +61,9 @@ var SWFRGB = function(bs) {
     this.toString = function() {
 	return "{Red:"+this.Red+" Green:"+this.Green+" Blue:"+this.Blue+"}";
     }
+    this.toStringCSS = function() {
+        return 'rgb('+this.Red+','+this.Green+','+this.Blue+')';
+    }
 }
 
 

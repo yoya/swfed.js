@@ -22,7 +22,7 @@ var SWFParser = function(editor) {
 	if (completed) {
 	    editor.main(this.swfheader, this.swftags);
 	} else {
-	    if ('progress' in editor && this.swfheader && 'FileLength' in this.swfheader) {
+	    if (editor.progress && this.swfheader) {
 		editor.progress(this.bs.byte_offset, this.swfheader.FileLength);
 	    }
 	}

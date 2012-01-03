@@ -1,15 +1,13 @@
 // var SWFScheduler = function(url) { ; }
 
 var SWFEditor = function() {
-    this.load = function(swf_url, main) {
+    this.load = function(swf_url, main, progress) {
 	this.main = main;
+	this.progress = progress;
 	new SWFLoader(swf_url, new SWFParser(this));
     }
     this.input = function(swf_data) {
 	new SWFParser(this).input(swf_data);
-    }
-    this.progress = function(a, b) {
-	console.debug("progress:"+a+"/"+b);
     }
     this.dump = function() {
 	var swfheader = this.swfheader;

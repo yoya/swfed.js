@@ -10,22 +10,34 @@
  <body>
   <canvas id="mycanvas" width="240" height="240"> canvas is here</canvas>
   <script type="text/javascript"">
-   var swf_url = 'saitama.swf';
+//   var swf_url = 'saitama.swf';
+   var swf_url = 'ffxi2.swf';
    var canvas_id = 'mycanvas'
+   var canvas = new SWFCanvas(canvas_id);
    var swfed = new SWFEditor();
-   swfed.load(swf_url, function() {
+   swfed.load(swf_url,
+   function() { // main
       var swfheader = swfed.swfheader;
       var swftags = swfed.swftags;
       swfed.dump();
-      var canvas = new SWFCanvas(canvas_id);
       for (var i = 0, n = swftags.length ; i < n ; i++) {
-         swftag = swftags[i];
+         var swftag = swftags[i];
          switch (swftag.code) {
 	   case 9: // SetBackGroundColor
 	      canvas.setBackgroundColor(swftag.data.BackgroundColor);
 	      break;
          }
       }
+   },
+   function(i, n) { // progress
+       console.debug('canvas');
+       var width = canvas.canvas.width;
+       var height = canvas.canvas.height;
+       var ratio1 = i/n;
+       var ratio2 = (3*ratio1+1)/4;
+       var ratio3 = (ratio2+1)/2;
+       var colorStops = [[ratio1,'black'], [ratio2,'blue'], [ratio3,'black']];
+       canvas.drawRadialGradient(width/2, height/2, width/2, colorStops);
    });
   </script>
  </body>
