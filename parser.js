@@ -90,7 +90,7 @@ var SWFParser = function(editor) {
 		break;
 	    case 20: // DefineBitsLossless
 	    case 36: // DefineBitsLossless2
-		data = new SWFDefineBitsLossless(bs, tag_code);
+		data = new SWFDefineBitsLossless(bs, tag_code, length);
 		break;
 	    case 777: // rfx (swftools)
 		data = bs.getData(length);
