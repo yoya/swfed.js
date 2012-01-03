@@ -388,7 +388,7 @@ var SWFSHAPERECORDS = function(bs, tag_code, currentNumBits) {
     this.build = function(bs, tag_code, currentNumBits) {
         bs.putUIBit(this.TypeFlag);
 	if (this.TypeFlag) { // Edge records
-            bs.putBit(this.StraightFlag);
+            bs.putUIBit(this.StraightFlag);
 	    if (this.StraightFlag) { // StraightEdgeRecord
                 var deltaXBits = bs.need_bits_signed(this.DeltaX);
                 var deltaYBits = bs.need_bits_signed(this.DeltaY);
