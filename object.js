@@ -357,6 +357,14 @@ var SWFHeader = function(bs) {
 	this.FrameRate  = bs.getUI16LE();
 	this.FrameCount = bs.getUI16LE();
     }
+    this.build = function(bs) {
+	bs.putData(this.Signature, 3);
+	bs.putUI8(this.Version);
+	bs.putUI32LE(this.FileLength);
+        this.FrameSize.build(bs);
+	bs.putUI16LE(this.FrameRate);
+	bs.putUI16LE(this.FrameCount);
+    }
 }
 
 /* Tag */
@@ -478,5 +486,15 @@ var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
             zlibBitmapDataLen--;
         }
         this.ZlibBitmapData = bs.getData(zlibBitmapDataLen);
+    }
+}
+
+var SWFUnknownTag = function(bs, tag_code, length) { // code:20,36
+    if (bs) {
+        this.tag_code = tag_code;
+	this.data = bs.getData(length);
+    }
+    this.build = function(bs) {
+        bs.putData(this.data);
     }
 }
