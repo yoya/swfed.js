@@ -1,0 +1,33 @@
+<html>
+ <head>
+  <script type="text/javascript" src="canvas.js"> </script>
+  <script type="text/javascript" src="bitstream.js"> </script>
+  <script type="text/javascript" src="object.js"> </script>
+  <script type="text/javascript" src="loader.js"> </script>
+  <script type="text/javascript" src="parser.js"> </script>
+  <script type="text/javascript" src="editor.js"> </script>
+ </head>
+ <body>
+  <canvas id="mycanvas" width="240" height="240"> canvas is here</canvas>
+  <script type="text/javascript"">
+   //url = 'saitama.swf';
+   var swf_url = 'ffxi2.swf';
+   var canvas_id = 'mycanvas'
+   var swfed = new SWFEditor();
+   swfed.main = function(swfheader, swftags) {
+      console.debug("swfed.main");
+      swfed.dump(swfheader, swftags);
+      var canvas = new SWFCanvas(canvas_id);
+      for (var i = 0, n = swftags.length ; i < n ; i++) {
+          swftag = swftags[i];
+          switch (swftag.code) {
+	    case 9: // SetBackGroundColor
+	      canvas.setBackgroundColor(swftag.data.BackgroundColor);
+	      break;
+	  }
+      }
+   }
+   swfed.load(swf_url);
+  </script>
+ </body>
+</html>
