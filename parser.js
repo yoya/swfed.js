@@ -2,7 +2,6 @@ var SWFParser = function(editor) {
     this.bs = null;
     this.swfheader = null;
     this.swftags = [];
-    this.editor = editor;
     this.input = function(data, isCompleted) {
 	if (data.length < 8) {
 	    return ; // skip
@@ -21,7 +20,7 @@ var SWFParser = function(editor) {
     }
     this.progress = function(completed) {
 	if (completed) {
-	    this.editor.main(this.swfheader, this.swftags);
+	    editor.main(this.swfheader, this.swftags);
 	} else {
 	    if ('progress' in editor && this.swfheader && 'FileLength' in this.swfheader) {
 		editor.progress(this.bs.byte_offset, this.swfheader.FileLength);
