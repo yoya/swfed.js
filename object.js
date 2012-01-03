@@ -301,9 +301,28 @@ var SWFSetBackgroundColor = function(bs) { // 9
 }
 
 
-var SWFDefineBitsJPEG2 = function(bs, length) { // 21
+var SWFDefineBits = function(bs, length) { // code:6
     if (bs) {
 	this.CharacterID = bs.getUI16LE();
 	this.ImageData = bs.getData(length - 2);
     }
 }
+
+
+var SWFDefineBitsJPEG2 = function(bs, length) { // code:21
+    if (bs) {
+	this.CharacterID = bs.getUI16LE();
+	this.ImageData = bs.getData(length - 2);
+    }
+}
+
+var SWFDefineBitsJPEG3 = function(bs, length) { // code:??
+    if (bs) {
+	this.CharacterID = bs.getUI16LE();
+	this.AlphaDataOffset = bs.getUI32LE();
+	this.ImageData = bs.getData(this.AlphaDataOffset);
+	this.BitmapAlphaData = bs.getData(length - 2 - this.AlphaDataOffset);
+    }
+}
+
+

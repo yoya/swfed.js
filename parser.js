@@ -64,14 +64,22 @@ var SWFParser = function(editor) {
 	    case 2: // DefineShape
 	    case 22: // DefineShape2
 	    case 32: // DefineShape3
-		data = this.parseTagDefineShape(bs, tag_code);
+		data = new SWFDefineShape(bs, tag_code);
 		break;
 	    case 9: // SetBackgroundColor
-		data = this.parseTagSetBackgroundColor(bs, tag_code);
+		data = new SWFSetBackgroundColor(bs);
 		break;
 	    case 6: // DefineBits
+		data = new SWFDefineBits(bs, length);
+		break;
 	    case 21: // DefineBitsJPEG2
-		data = this.parseTagDefineBitsJPEG(bs, tag_code, length)
+		data = new SWFDefineBitsJPEG2(bs, length);
+		break;
+	    case 26: // PlaceObject2
+		//		data = new SWFPlaceObject2(bs, length);
+		break;
+	    case 35: // DefineBitsJPEG3
+		data = new SWFDefineBitsJPEG3(bs, length);
 		break;
 	    case 777: // rfx (swftools)
 		data = bs.getData(length);
@@ -84,26 +92,6 @@ var SWFParser = function(editor) {
 	    if (tag_code === 0) { // End
 		break;
 	    }
-	}
-    }
-    // 2, ?, ?
-    this.parseTagDefineShape = function(bs, tag_code) {
-	return new SWFDefineShape(bs, tag_code);
-    }
-    //
-    this.parseTagSetBackgroundColor = function(bs, tag_code) {
-	return new SWFSetBackgroundColor(bs);
-    }
-    // ?, 21, ?
-    this.parseTagDefineBitsJPEG = function(bs, tag_code, length) {
-	if (tag_code < 35)  {
-	    return new SWFDefineBitsJPEG2(bs, length);
-	}
-    }
-    // ?, 26
-    this.parseTagPlaceObject = function(bs, tag_code) {
-	if (tag_code === 26) {
-	    return new SWFPlaceObject2(bs, length);
 	}
     }
 }
