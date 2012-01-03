@@ -92,11 +92,9 @@ var SWFParser = function(editor) {
 	    case 36: // DefineBitsLossless2
 		data = new SWFDefineBitsLossless(bs, tag_code, length);
 		break;
-	    case 777: // rfx (swftools)
-		data = bs.getData(length);
-                break;
 	    default:
-		;; // nothing to do
+		data = new SWFUnknownTag(bs, tag_code, length);
+		break;
 	    }
 	    var tag = {code:tag_code, length:length, data:data};
 	    this.swftags.push(tag);
