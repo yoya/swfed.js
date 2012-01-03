@@ -5,6 +5,7 @@ var SWFBuilder = function(swfheader, swftags) {
 	var bs = new Bitstream();
         this.buildHeader(bs);
         this.buildTags(bs);
+        return bs.output();
     }
     this.buildHeader = function(bs) {
 	this.swfheader.build(bs);
