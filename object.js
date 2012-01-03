@@ -186,6 +186,7 @@ var SWFLINESTYLEARRAY = function(bs, tag_code) {
 	this.LineStyles = lineStyles;
     }
 }
+
 var SWFSHAPERECORDS = function(bs, tag_code, currentNumBits) {
     if (bs) {
 	var first5Bits = bs.getUIBits(5);
@@ -274,6 +275,26 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
     }
 }
 
+var SWFCXFORM = function(bs) {
+    if (bs) {
+        bs.byteAlign();
+        var first6bits = bs.getUIBits(6);
+        this.HasAddTerms = first6bits >> 5;
+        this.HasMultiTerms = (first6bits >> 4) & 1;
+        var nbits = first6bits & 0x0f;
+        this.Nbits = nbits;
+        if (this.HasMultiTerms) {
+            this.RedMultiTerm = bs.getSIBits(nbits);
+            this.GreenMultiTerm = bs.getSIBits(nbits);
+            this.BlueMultiTerm = bs.getSIBits(nbits);
+        }
+        if (this.HasAddTerms) {
+            this.RedAddTerm = bs.getSIBits(nbits);
+            this.GreenAddTerm = bs.getSIBits(nbits);
+            this.BlueAddTerm = bs.getSIBits(nbits);
+        }
+    }
+}
 var SWFCXFORMWITHALPHA = function(bs) {
     if (bs) {
         bs.byteAlign();
@@ -308,6 +329,7 @@ var SWFCLIPACTIONRECORD = function(bs) {
         ;
     }
 }
+
 var SWFCLIPACTIONS = function(bs) {
     if (bs) {
         this.Reserved = bs.getUI16LE(); 
@@ -339,11 +361,88 @@ var SWFHeader = function(bs) {
 
 /* Tag */
 
+var SWFShowFrame = function(bs, tag_code) { // 1
+    ;
+}
+
 var SWFDefineShape = function(bs, tag_code) { // 2
     if (bs) {
 	this.ShapeId = bs.getUI16LE();
 	this.ShapeBounds = new SWFRECT(bs);
 	this.Shapes = new SWFSHAPEWITHSTYLE(bs, tag_code);
+    }
+}
+
+var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
+    if (bs) {
+        if (tag_code === 4) { // PlaceObject
+            var byteOffset = bs.byte_offset;
+            this.CharacterId = bs.getUI16LE();
+            this.Depth = bs.getUI16LE();
+            this.Matrix = new SWFMATRIX(bs);
+            bs.byteAlign();
+            if (byteOffset + length < bs.byte_offset) {
+                this.Colortransform = new SWFCXFORM(bs);
+            }
+        } else { // PlaceObject2
+            var placeFlag = bs.getUI8();
+            this.PlaceFlagHasClipActions = placeFlag & 0x80;
+            this.PlaceFlagHasClipDepth   = placeFlag & 0x40;
+            this.PlaceFlagHasName        = placeFlag & 0x20;
+            this.PlaceFlagHasRatio       = placeFlag & 0x10;
+            this.PlaceFlagHasColorTransform = placeFlag & 0x08;
+            this.PlaceFlagHasMatrix      = placeFlag & 0x04;
+            this.PlaceFlagHasCharacter   = placeFlag & 0x02;
+            this.PlaceFlagHasMove        = placeFlag & 0x01;
+            this.Depth = bs.getUI16LE();
+            if (this.PlaceFlagHasCharacter) {
+                this.CharacterId = bs.getUI16LE();
+            }
+            if (this.PlaceFlagHasMatrix) {
+                this.Matrix = new SWFMATRIX(bs);
+            }
+            if (this.PlaceFlagHasColorTransform) {
+                this.Colortransform = new SWFCXFORMWITHALPHA(bs);
+            }
+            if (this.PlaceFlagHasRatio) {
+                this.Ratio = bs.getUI16LE();
+            }
+            if (this.PlaceFlagHasName) {
+                this.Name = bs.getDataUntil("\0");
+            }
+            if (this.PlaceFlagHasClipDepth) {
+                this.ClipDepth = bs.getUI16LE();
+            }
+            if (this.PlaceFlagHasClipActions) {
+                this.ClipActions = new SWFCLIPACTIONS(bs);
+            }
+        }
+    }
+}
+
+var SWFRemoveObject = function(bs, tag_code) { // 5, 28
+    if (bs) {
+        if (tag_code === 5) { // RemoveObject
+            this.CharacterId = bs.getUI16LE();
+            this.Depth = bs.getUI16LE();
+        } else { // RemoveObject2
+            this.Depth = bs.getUI16LE();
+        }
+    }
+}
+
+var SWFDefineBitsJPEG = function(bs, tag_code, length) { // code:6, 21, 35
+    if (bs) {
+	this.CharacterID = bs.getUI16LE();
+        var imageDataLen = length - 2;
+        if (tag_code === 35) { // DefineBitsJPEG3
+            this.AlphaDataOffset = bs.getUI32LE();
+            imageDataLen = this.AlphaDataOffset;
+        }
+	this.ImageData = bs.getData(imageDataLen);
+        if (tag_code === 35) { // DefineBitsJPEG3
+            this.BitmapAlphaData = bs.getData(length - 2 - imageDataLen);
+        }
     }
 }
 
@@ -353,65 +452,5 @@ var SWFSetBackgroundColor = function(bs) { // 9
     }
 }
 
-
-var SWFDefineBits = function(bs, length) { // code:6
-    if (bs) {
-	this.CharacterID = bs.getUI16LE();
-	this.ImageData = bs.getData(length - 2);
-    }
-}
-
-
-var SWFDefineBitsJPEG2 = function(bs, length) { // code:21
-    if (bs) {
-	this.CharacterID = bs.getUI16LE();
-	this.ImageData = bs.getData(length - 2);
-    }
-}
-
-var SWFPlaceObject2 = function(bs, length) { // code:26
-    if (bs) {
-	var placeFlag = bs.getUI8();
-	this.PlaceFlagHasClipActions = placeFlag & 0x80;
-	this.PlaceFlagHasClipDepth   = placeFlag & 0x40;
-	this.PlaceFlagHasName        = placeFlag & 0x20;
-	this.PlaceFlagHasRatio       = placeFlag & 0x10;
-	this.PlaceFlagHasColorTransform = placeFlag & 0x08;
-	this.PlaceFlagHasMatrix      = placeFlag & 0x04;
-	this.PlaceFlagHasCharacter   = placeFlag & 0x02;
-	this.PlaceFlagHasMove        = placeFlag & 0x01;
-	this.Depth = bs.getUI16LE();
-	if (this.PlaceFlagHasCharacter) {
-	    this.CharacterId = bs.getUI16LE();
-	}
-	if (this.PlaceFlagHasMatrix) {
-	    this.Matrix = new SWFMATRIX(bs);
-	}
-	if (this.PlaceFlagHasColorTransform) {
-	    this.Colortransform = new SWFCXFORMWITHALPHA(bs);
-	}
-	if (this.PlaceFlagHasRatio) {
-	    this.Ratio = bs.getUI16LE();
-	}
-	if (this.PlaceFlagHasName) {
-	    this.Name = bs.getDataUntil("\0");
-	}
-	if (this.PlaceFlagHasClipDepth) {
-	    this.ClipDepth = bs.getUI16LE();
-	}
-	if (this.PlaceFlagHasClipActions) {
-	    this.ClipActions = new SWFCLIPACTIONS(bs);
-	}
-    }
-}
-
-var SWFDefineBitsJPEG3 = function(bs, length) { // code:35
-    if (bs) {
-	this.CharacterID = bs.getUI16LE();
-	this.AlphaDataOffset = bs.getUI32LE();
-	this.ImageData = bs.getData(this.AlphaDataOffset);
-	this.BitmapAlphaData = bs.getData(length - 2 - this.AlphaDataOffset);
-    }
-}
 
 

@@ -61,6 +61,9 @@ var SWFParser = function(editor) {
 	    var tag_data_start_offset = bs.byte_offset;
 	    var data = null;
 	    switch (tag_code) {
+	    case 1: // ShowFrame
+                data = new SWFShowFrame(bs);
+		break;
 	    case 2: // DefineShape
 	    case 22: // DefineShape2
 	    case 32: // DefineShape3
@@ -70,19 +73,16 @@ var SWFParser = function(editor) {
 		data = new SWFSetBackgroundColor(bs);
 		break;
 	    case 6: // DefineBits
-		data = new SWFDefineBits(bs, length);
-		break;
 	    case 21: // DefineBitsJPEG2
-		data = new SWFDefineBitsJPEG2(bs, length);
+	    case 35: // DefineBitsJPEG3
+		data = new SWFDefineBitsJPEG(bs, tag_code, length);
 		break;
 	    case 26: // PlaceObject2
-		data = new SWFPlaceObject2(bs, length);
-		break;
-	    case 35: // DefineBitsJPEG3
-		data = new SWFDefineBitsJPEG3(bs, length);
+		data = new SWFPlaceObject(bs, tag_code, length);
 		break;
 	    case 777: // rfx (swftools)
 		data = bs.getData(length);
+                break;
 	    default:
 		;; // nothing to do
 	    }
