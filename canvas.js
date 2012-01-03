@@ -20,6 +20,19 @@ var SWFCanvas = function (canvas_id) {
         ctx.rect(x-w, y-w, x+w, y+w);
         ctx.fill();
     }
+    this.drawLinearGradient = function(x1, y1, x2, y2, x3, y3, colorStops) {
+        ctx.beginPath();
+        var grad  = ctx.createLinearGradient(x1, y1, x3, y3);
+        if (colorStops) {
+            for (var i = 0, n = colorStops.length; i < n ; i++) {
+                var ratio = colorStops[i][0], color = colorStops[i][1];
+                grad.addColorStop(ratio, color);
+            }
+        }
+        ctx.fillStyle = grad;
+        ctx.rect(x1, y1, x2, y2);
+        ctx.fill();
+    }
     // ex) drawFill([[10, 10],[100, 10], [100, 100], [10, 100]], 'yellow', 3);
     this.drawFill = function(edges, color) {
         ctx.fillStyle = color;
