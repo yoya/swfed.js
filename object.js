@@ -35,7 +35,7 @@ var SWFMATRIX = function(bs) {
 	this.TranslateY = bs.getSIBits(nTranslateBits);
     }
     this.toString = function() {
-	text = '';
+	text = '{';
 	if (this.HasScale) {
 	    text += "ScaleX:"+(this.ScaleX/0x10000)+" ScaleY:"+(this.ScaleY/0x10000);
 	}
@@ -48,7 +48,7 @@ var SWFMATRIX = function(bs) {
 	if (this.HasScale || this.HasRotate) {
 		text += " ";
 	}
-	return text + "TranslateX:"+(this.TranslateX/0x10000)+" TranslateY:"+(this.TranslateY/0x10000);
+	return text + "TranslateX:"+(this.TranslateX/0x10000)+" TranslateY:"+(this.TranslateY/0x10000)+'}';
     }
 }
 
@@ -59,7 +59,7 @@ var SWFRGB = function(bs) {
 	this.Blue = bs.getUI8();
     }
     this.toString = function() {
-	return "Red:"+this.Red+" Green:"+this.Green+" Blue:"+this.Blue;
+	return "{Red:"+this.Red+" Green:"+this.Green+" Blue:"+this.Blue+"}";
     }
 }
 
@@ -72,7 +72,7 @@ var SWFRGBA = function(bs) {
 	this.Alpha = bs.getUI8();
     }
     this.toString = function() {
-	return "Red:"+this.Red+" Green:"+this.Green+" Blue:"+this.Blue+" Alpha:"+this.Alpha;
+	return "{Red:"+this.Red+" Green:"+this.Green+" Blue:"+this.Blue+" Alpha:"+this.Alpha+"}";
     }
 }
 
@@ -84,7 +84,7 @@ var SWFARGB = function(bs) {
 	this.Blue  = bs.getUI8();
     }
     this.toString = function() {
-	return "Alpha:"+this.Alpha+" Red:"+this.Red+" Green:"+this.Green+" Blue:"+this.Blue;
+	return "{Alpha:"+this.Alpha+" Red:"+this.Red+" Green:"+this.Green+" Blue:"+this.Blue+"}";
     }
 }
 
@@ -95,7 +95,6 @@ var SWFGRADRECORD = function(bs, tag_code) {
     } else { // DefineShape3
 	this.Color = new SWFRGBA(bs);
     }
-
 }
 
 var SWFGRADIENT = function(bs, tag_code) {
@@ -268,7 +267,7 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
 	}
     }
     this.toString = function() {
-	return "FillStyles:"+this.FillStyles+" LineStyles:"+this.LineStyles+" numFillBits:"+this.NumFillBits+" NumLineBits:"+this.NumLineBits+" ShapeRecords:"+this.ShapeRecords;
+	return "{FillStyles:"+this.FillStyles+" LineStyles:"+this.LineStyles+" numFillBits:"+this.NumFillBits+" NumLineBits:"+this.NumLineBits+" ShapeRecords:"+this.ShapeRecords+"}";
     }
 }
 

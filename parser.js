@@ -8,16 +8,16 @@ var SWFParser = function(editor) {
 	    return ; // skip
 	}
 	if (this.bs === null) {
-	    //	    console.debug('this.bs === null');
 	    this.bs = new Bitstream();
 	}
 	var bs = this.bs;
 	bs.input(data);
-	//	console.debug('bs.byte_offset:'+bs.byte_offset+' < 8');
 	if (bs.byte_offset < 8) {
 	    this.parseHeader(bs);
+	    editor.swfheader = this.swfheader;
 	}
 	this.parseTags(bs);
+	editor.swftags = this.swftags;
     }
     this.progress = function(completed) {
 	if (completed) {

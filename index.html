@@ -14,20 +14,20 @@
    var swf_url = 'ffxi2.swf';
    var canvas_id = 'mycanvas'
    var swfed = new SWFEditor();
-   swfed.main = function(swfheader, swftags) {
-      console.debug("swfed.main");
-      swfed.dump(swfheader, swftags);
+   swfed.load(swf_url, function() {
+      var swfheader = swfed.swfheader;
+      var swftags = swfed.swftags;
+      swfed.dump();
       var canvas = new SWFCanvas(canvas_id);
       for (var i = 0, n = swftags.length ; i < n ; i++) {
-          swftag = swftags[i];
-          switch (swftag.code) {
-	    case 9: // SetBackGroundColor
+         swftag = swftags[i];
+         switch (swftag.code) {
+	   case 9: // SetBackGroundColor
 	      canvas.setBackgroundColor(swftag.data.BackgroundColor);
 	      break;
-	  }
+         }
       }
-   }
-   swfed.load(swf_url);
+   });
   </script>
  </body>
 </html>
