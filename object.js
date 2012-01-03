@@ -271,16 +271,66 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
     }
 }
 
+var SWFCXFORMWITHALPHA = function(bs) {
+    if (bs) {
+        bs.byteAlign();
+        var first6bits = bs.getUIBits(6);
+        this.HasAddTerms = first6bits >> 5;
+        this.HasMultiTerms = (first6bits >> 4) & 1;
+        var nbits = first6bits & 0x0f;
+        this.Nbits = nbits;
+        if (this.HasMultiTerms) {
+            this.RedMultiTerm = bs.getSIBits(nbits);
+            this.GreenMultiTerm = bs.getSIBits(nbits);
+            this.BlueMultiTerm = bs.getSIBits(nbits);
+            this.AlphaMultiTerm = bs.getSIBits(nbits);
+        }
+        if (this.HasAddTerms) {
+            this.RedAddTerm = bs.getSIBits(nbits);
+            this.GreenAddTerm = bs.getSIBits(nbits);
+            this.BlueAddTerm = bs.getSIBits(nbits);
+            this.AlphaAddTerm = bs.getSIBits(nbits);
+        }
+    }
+}
+
+var SWFCLIPEVENTFLAGS = function(bs) {
+    if (bs) {
+        ;
+    }
+}
+
+var SWFCLIPACTIONRECORD = function(bs) {
+    if (bs) {
+        ;
+    }
+}
+var SWFCLIPACTIONS = function(bs) {
+    if (bs) {
+        this.Reserved = bs.getUI16LE(); 
+         this.AllEventFlags = new SWFCLIPEVENTFLAGS(bs);
+        var clipActionRecords = [];
+        while (true) {
+            clipActionRecord = new SWFCLIPACTIONRECORD(bs);
+            clipActionRecords.push(clipActionRecord);
+            if (true) { // condition end of clipactionrecords
+                break;
+            }
+        }
+        this.ClipActionRecords = clipActionRecords; 
+        this.FrameRate  = bs.getUI16LE(); // XXX getUI32LE if SWFv6 over
+    }
+}
 
 /* Header */
 var SWFHeader = function(bs) {
     if (bs) {
-	this.Signature  = bs.getData(3),
-	this.Version    = bs.getUI8(),
-	this.FileLength = bs.getUI32LE(),
-	this.FrameSize  = new SWFRECT(bs),
-	this.FrameRate  = bs.getUI16LE(),
-	this.FrameCount = bs.getUI16LE()
+	this.Signature  = bs.getData(3);
+	this.Version    = bs.getUI8();
+	this.FileLength = bs.getUI32LE();
+	this.FrameSize  = new SWFRECT(bs);
+	this.FrameRate  = bs.getUI16LE();
+	this.FrameCount = bs.getUI16LE();
     }
 }
 
@@ -316,7 +366,43 @@ var SWFDefineBitsJPEG2 = function(bs, length) { // code:21
     }
 }
 
-var SWFDefineBitsJPEG3 = function(bs, length) { // code:??
+var SWFPlaceObject2 = function(bs, length) { // code:26
+    if (bs) {
+	var placeFlag = bs.getUI8();
+	this.PlaceFlagHasClipActions = placeFlag & 0x80;
+	this.PlaceFlagHasClipDepth   = placeFlag & 0x40;
+	this.PlaceFlagHasName        = placeFlag & 0x20;
+	this.PlaceFlagHasRatio       = placeFlag & 0x10;
+	this.PlaceFlagHasColorTransform = placeFlag & 0x08;
+	this.PlaceFlagHasMatrix      = placeFlag & 0x04;
+	this.PlaceFlagHasCharacter   = placeFlag & 0x02;
+	this.PlaceFlagHasMove        = placeFlag & 0x01;
+	this.Depth = bs.getUI16LE();
+	if (this.PlaceFlagHasCharacter) {
+	    this.CharacterId = bs.getUI16LE();
+	}
+	if (this.PlaceFlagHasMatrix) {
+	    this.Matrix = new SWFMATRIX(bs);
+	}
+	if (this.PlaceFlagHasColorTransform) {
+	    this.Colortransform = new SWFCXFORMWITHALPHA(bs);
+	}
+	if (this.PlaceFlagHasRatio) {
+	    this.Ratio = bs.getUI16LE();
+	}
+	if (this.PlaceFlagHasName) {
+	    this.Name = bs.getDataUntil("\0");
+	}
+	if (this.PlaceFlagHasClipDepth) {
+	    this.ClipDepth = bs.getUI16LE();
+	}
+	if (this.PlaceFlagHasClipActions) {
+	    this.ClipActions = new SWFCLIPACTIONS(bs);
+	}
+    }
+}
+
+var SWFDefineBitsJPEG3 = function(bs, length) { // code:35
     if (bs) {
 	this.CharacterID = bs.getUI16LE();
 	this.AlphaDataOffset = bs.getUI32LE();

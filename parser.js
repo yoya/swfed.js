@@ -76,7 +76,7 @@ var SWFParser = function(editor) {
 		data = new SWFDefineBitsJPEG2(bs, length);
 		break;
 	    case 26: // PlaceObject2
-		//		data = new SWFPlaceObject2(bs, length);
+		data = new SWFPlaceObject2(bs, length);
 		break;
 	    case 35: // DefineBitsJPEG3
 		data = new SWFDefineBitsJPEG3(bs, length);
