@@ -1,5 +1,5 @@
 var Bitstream = function() {
-    this.data = null;
+    this.data = '';
     this.byte_offset = 0;
     this.bit_offset = 0;
     this.input = function(data) {
@@ -21,8 +21,17 @@ var Bitstream = function() {
 		this.bit_offset += 8;
 	    }
 	}
-
     }
+    this._allocData = function(need_data_len) {
+        var data_len = data.length;
+        for (data_len < need_data_len; ; data_len++) {
+            this.data += "\0";
+        }
+    }
+
+    /*
+     * get function
+     */
     this.getData = function(n) {
 	this.byteAlign();
 	bo = this.byte_offset;
@@ -84,6 +93,90 @@ var Bitstream = function() {
 	}
 	return value;
     }
+
+    /*
+     * put function
+     */
+    this.putData = function(data, n) {
+	this.byteAlign();
+        data_len = data.length;
+        if (n === null) {
+            if (data_len < n) {
+                this.data += data.substr(0, n);
+            } else {
+                while (data_len++ < n) {
+                    this.data += "\0";
+                }
+            }
+        } else {
+            this.data += data;
+            n = data_len;
+        }
+	this.byte_offset += n;
+	return ret;
+    }
+    this.putUI8 = function(value) {
+	this.byteAlign();
+        this.data += String.fromCharCode(value & 0xff);
+        this.byte_offset++;
+    }
+    this.putUI16LE = function(value) {
+	this.byteAlign();
+        var v0 = value & 0xff; value >>= 8;
+        var v1 = value & 0xff;
+        this.data += String.fromCharCode(v0, v1);
+        this.byte_offset += 2;
+    }
+    this.putUI32LE = function(value) {
+	this.byteAlign();
+        var v0 = value & 0xff; value >>= 8;
+        var v1 = value & 0xff; value >>= 8;
+        var v2 = value & 0xff; value >>= 8;
+        var v3 = value & 0xff;
+        this.data += String.fromCharCode(v0, v1, v2, v3);
+        this.byte_offset += 4;
+    }
+    this.putUIBit = function(bit) {
+	this.byteCarry();
+        this._allocData(this.byte_offset + 1);
+        var value = this.data.charCodeAt(this.byte_offset) & 0xff;
+        value |= bit << (7 - this.bit_offset);
+        this.data[this.byte_offset] = String.fromCharCode(value);
+        this.bit_offset++;
+    }
+    this.putUIBits = function(value, n) {
+	var value = 0;
+	while (n--) {
+            bit = (value >> n) & 1;
+	    this.putUIBit(bit);
+	}
+    }
+    this.putSIBits = function(value, n) {
+        if (value < 0) {
+            var msb = 1 << (n - 1);
+	    var bitmask = (2 * msb) - 1;
+            value = (-value  - 1) ^ bitmask;
+	}
+	this.putUIBits(value, n);
+    }
+
+    /*
+     * set function
+     */
+    this.setUI16LE = function(value, byte_offset) {
+        this.data[byte_offset++] = value & 0xff; value >>= 8;
+        this.data[byte_offset  ] = value;
+    }
+    this.setUI32LE = function(value, byte_offset) {
+        this.data[byte_offset++] = value & 0xff; value >>= 8;
+        this.data[byte_offset++] = value & 0xff; value >>= 8;
+        this.data[byte_offset++] = value & 0xff; value >>= 8;
+        this.data[byte_offset  ] = value & 0xff;
+    }
+
+    /*
+     * seek
+     */
     this.setOffset = function(byte_offset, bit_offset) {
 	this.byte_offset = byte_offset;
 	this.bit_offset  = bit_offset;
