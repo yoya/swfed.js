@@ -10,8 +10,8 @@
  <body>
   <canvas id="mycanvas" width="240" height="240"> canvas is here</canvas>
   <script type="text/javascript"">
-//   var swf_url = 'saitama.swf';
-   var swf_url = 'ffxi2.swf';
+   var swf_url = 'saitama.swf';
+//   var swf_url = 'ffxi2.swf';
    var canvas_id = 'mycanvas'
    var canvas = new SWFCanvas(canvas_id);
    var swfed = new SWFEditor();
@@ -30,7 +30,6 @@
       }
    },
    function(i, n) { // progress
-       console.debug('canvas');
        var width = canvas.canvas.width;
        var height = canvas.canvas.height;
        var ratio1 = i/n;
