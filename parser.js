@@ -69,16 +69,21 @@ var SWFParser = function(editor) {
 	    case 32: // DefineShape3
 		data = new SWFDefineShape(bs, tag_code);
 		break;
-	    case 9: // SetBackgroundColor
-		data = new SWFSetBackgroundColor(bs);
+	    case 4: // PlaceObject
+	    case 26: // PlaceObject2
+		data = new SWFPlaceObject(bs, tag_code, length);
+		break;
+	    case 5: // RemoveObject
+	    case 28: // RemoveObject2
+		data = new SWFRemoveObject(bs, tag_code);
 		break;
 	    case 6: // DefineBits
 	    case 21: // DefineBitsJPEG2
 	    case 35: // DefineBitsJPEG3
 		data = new SWFDefineBitsJPEG(bs, tag_code, length);
 		break;
-	    case 26: // PlaceObject2
-		data = new SWFPlaceObject(bs, tag_code, length);
+	    case 9: // SetBackgroundColor
+		data = new SWFSetBackgroundColor(bs);
 		break;
 	    case 777: // rfx (swftools)
 		data = bs.getData(length);
