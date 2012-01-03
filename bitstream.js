@@ -23,8 +23,7 @@ var Bitstream = function() {
 	}
     }
     this._allocData = function(need_data_len) {
-        var data_len = data.length;
-        for (data_len < need_data_len; ; data_len++) {
+        for (var data_len = data.length ; data_len < need_data_len ; data_len++) {
             this.data += "\0";
         }
     }
@@ -189,7 +188,7 @@ var Bitstream = function() {
             n = -1 - n;
         }
         if (n >= 0) {
-            for (i = 0 ; n ; i++) {
+            for (var i = 0 ; n ; i++) {
                 n >>= 1;
             }
             ret = 1 + i;
