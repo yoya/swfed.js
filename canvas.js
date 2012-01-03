@@ -20,6 +20,7 @@ var SWFCanvas = function (canvas_id) {
         ctx.rect(x-w, y-w, x+w, y+w);
         ctx.fill();
     }
+    // http://www.html5.jp/canvas/how4.html
     this.drawLinearGradient = function(x1, y1, x2, y2, x3, y3, colorStops) {
         ctx.beginPath();
         var grad  = ctx.createLinearGradient(x1, y1, x3, y3);
