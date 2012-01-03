@@ -361,12 +361,21 @@ var SWFHeader = function(bs) {
 
 /* Tag */
 
-var SWFShowFrame = function(bs, tag_code) { // 1
-    ;
+var SWFEnd = function(bs, tag_code) { // code:0
+    if (bs) {
+        this.tag_code = tag_code;
+    }
+}
+
+var SWFShowFrame = function(bs, tag_code) { // code:1
+    if (bs) {
+        this.tag_code = tag_code;
+    }
 }
 
 var SWFDefineShape = function(bs, tag_code) { // 2
     if (bs) {
+        this.tag_code = tag_code;
 	this.ShapeId = bs.getUI16LE();
 	this.ShapeBounds = new SWFRECT(bs);
 	this.Shapes = new SWFSHAPEWITHSTYLE(bs, tag_code);
@@ -375,6 +384,7 @@ var SWFDefineShape = function(bs, tag_code) { // 2
 
 var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
     if (bs) {
+        this.tag_code = tag_code;
         if (tag_code === 4) { // PlaceObject
             var byteOffset = bs.byte_offset;
             this.CharacterId = bs.getUI16LE();
@@ -422,6 +432,7 @@ var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
 
 var SWFRemoveObject = function(bs, tag_code) { // 5, 28
     if (bs) {
+        this.tag_code = tag_code;
         if (tag_code === 5) { // RemoveObject
             this.CharacterId = bs.getUI16LE();
             this.Depth = bs.getUI16LE();
@@ -433,6 +444,7 @@ var SWFRemoveObject = function(bs, tag_code) { // 5, 28
 
 var SWFDefineBitsJPEG = function(bs, tag_code, length) { // code:6, 21, 35
     if (bs) {
+        this.tag_code = tag_code;
 	this.CharacterID = bs.getUI16LE();
         var imageDataLen = length - 2;
         if (tag_code === 35) { // DefineBitsJPEG3
@@ -446,11 +458,25 @@ var SWFDefineBitsJPEG = function(bs, tag_code, length) { // code:6, 21, 35
     }
 }
 
-var SWFSetBackgroundColor = function(bs) { // 9
+var SWFSetBackgroundColor = function(bs, tag_code) { // 9
     if (bs) {
+        this.tag_code = tag_code;
 	this.BackgroundColor = new SWFRGB(bs);
     }
 }
 
-
-
+var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
+    if (bs) {
+        this.tag_code = tag_code;
+	this.CharacterID = bs.getUI16LE();
+	this.BitmapFormat = bs.getUI8();
+	this.BitmapWidth = bs.getUI16LE();
+	this.BitmapHeight = bs.getUI16LE();
+        var zlibBitmapDataLen = length - 7;
+        if (this.BitmapFormat === 3) {
+            this.BitmapColorTableSize = bs.getUI8();            
+            zlibBitmapDataLen--;
+        }
+        this.ZlibBitmapData = bs.getData(zlibBitmapDataLen);
+    }
+}
