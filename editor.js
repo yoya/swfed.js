@@ -21,4 +21,8 @@ var SWFEditor = function() {
 	    }
 	}
     }
+    this.output = function() {
+        var builder = new SWFBuilder(this.swfheader, this.swftags);
+        return builder.output();
+    }
 }

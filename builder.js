@@ -15,7 +15,7 @@ var SWFBuilder = function(swfheader, swftags) {
             var swftag = this.swftags[i];
             var tag_code = swftag.tag_code;
             var bs_tag = new Bitstream();
-            swftag.build(bs_tag);
+            swftag.data.build(bs_tag);
             var data = bs_tag.output();
             var length = data.length;
             switch (tag_code) {
