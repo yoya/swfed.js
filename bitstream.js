@@ -2,6 +2,7 @@ var Bitstream = function() {
     this.data = '';
     this.byte_offset = 0;
     this.bit_offset = 0;
+    this.work_bits = 0;
     this.input = function(data) {
 	this.data = data;
     }
@@ -19,6 +20,11 @@ var Bitstream = function() {
 	if (this.bit_offset) {
 	    this.byte_offset += ((this.bit_offset+7)/8) | 0;
 	    this.bit_offset = 0;
+            if (this.data.length + 1 === this.byte_offset) {
+                console.log('this.work_bits'+this.work_bits);
+                this.data += String.fromCharCode(this.work_bits);
+                this.work_bits = 0;
+            }
 	}
     }
     this.byteCarry = function() {
@@ -31,11 +37,6 @@ var Bitstream = function() {
 		this.bit_offset += 8;
 	    }
 	}
-    }
-    this._allocData = function(need_data_len) {
-        for (var data_len = this.data.length ; data_len < need_data_len ; data_len++) {
-            this.data += "\0";
-        }
     }
 
     /*
@@ -147,17 +148,19 @@ var Bitstream = function() {
     }
     this.putUIBit = function(bit) {
 	this.byteCarry();
-        this._allocData(this.byte_offset + 1);
         var value = this.data.charCodeAt(this.byte_offset) & 0xff;
-        value |= bit << (7 - this.bit_offset);
-        this.data[this.byte_offset] = String.fromCharCode(value);
+        this.work_bits |= bit << (7 - this.bit_offset);
         this.bit_offset++;
+        if (this.bit_offset === 8) {
+            this.byteCarry();
+            console.log('this.work_bits'+this.work_bits);
+            this.data += String.fromCharCode(this.work_bits);
+            this.work_bits = 0;
+        }
     }
     this.putUIBits = function(value, n) {
-	var value = 0;
 	while (n--) {
-            bit = (value >> n) & 1;
-	    this.putUIBit(bit);
+	    this.putUIBit((value >> n) & 1);
 	}
     }
     this.putSIBits = function(value, n) {
