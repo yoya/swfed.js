@@ -1,0 +1,37 @@
+<html>
+ <head>
+  <script type="text/javascript" src="canvas.js"> </script>
+  <script type="text/javascript" src="bitstream.js"> </script>
+  <script type="text/javascript" src="object.js"> </script>
+  <script type="text/javascript" src="parser.js"> </script>
+  <script type="text/javascript" src="builder.js"> </script>
+  <script type="text/javascript" src="editor.js"> </script>
+  <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ </head>
+ <body>
+
+  <script type="text/javascript"">
+  window.onload = function() {
+//    <canvas id="mycanvas" width="240" height="240"> canvas is here </canvas>
+//    var mycanvas = new SWFCanvas("mycanvas");
+      var myfile = document.getElementById("myfile")
+      myfile.addEventListener("change", onChangeFile, false);
+  }
+
+  var onChangeFile = function(e) {
+       var file = e.target.files[0];
+       var reader = new FileReader();
+       reader.onload = function(e) {
+           var data = e.target.result;
+           console.debug(file);
+           var swfed = new SWFEditor();
+           swfed.input(data);
+           swfed.dump();
+       }
+       reader.readAsBinaryString(file);
+  }
+
+  </script>
+  <input id="myfile" type="file" />
+ </body>
+</html>
