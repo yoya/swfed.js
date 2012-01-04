@@ -21,7 +21,6 @@ var Bitstream = function() {
 	    this.byte_offset += ((this.bit_offset+7)/8) | 0;
 	    this.bit_offset = 0;
             if (this.data.length + 1 === this.byte_offset) {
-                console.log('this.work_bits'+this.work_bits);
                 this.data += String.fromCharCode(this.work_bits);
                 this.work_bits = 0;
             }
@@ -153,7 +152,6 @@ var Bitstream = function() {
         this.bit_offset++;
         if (this.bit_offset === 8) {
             this.byteCarry();
-            console.log('this.work_bits'+this.work_bits);
             this.data += String.fromCharCode(this.work_bits);
             this.work_bits = 0;
         }
