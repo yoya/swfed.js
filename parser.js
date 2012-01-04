@@ -1,6 +1,7 @@
 var SWFParser = function(editor) {
     this.bs = null;
     this.swfheader = null;
+    this.swfmovieheader = null;
     this.swftags = [];
     this.input = function(data, isCompleted) {
 	if (data.length < 8) {
@@ -11,16 +12,18 @@ var SWFParser = function(editor) {
 	}
 	var bs = this.bs;
 	bs.input(data);
-	if (bs.byte_offset < 8) {
+	if (bs.byte_offset < 16) {
 	    this.parseHeader(bs);
+	    this.parseMovieHeader(bs);
 	    editor.swfheader = this.swfheader;
+	    editor.swfmovieheader = this.swfmovieheader;
 	}
 	this.parseTags(bs);
 	editor.swftags = this.swftags;
     }
     this.progress = function(completed) {
 	if (completed) {
-	    editor.main(this.swfheader, this.swftags);
+	    editor.main(this.swfheader, this.swfmovieheader, this.swftags);
 	} else {
 	    if (editor.progress && this.swfheader) {
 		editor.progress(this.bs.byte_offset, this.swfheader.FileLength);
@@ -30,6 +33,10 @@ var SWFParser = function(editor) {
     this.parseHeader = function(bs) {
 	//	console.debug('parseHeader');
 	this.swfheader = new SWFHeader(bs);
+    }
+    this.parseMovieHeader = function(bs) {
+	//	console.debug('parseMovieHeader');
+	this.swfmovieheader = new SWFMovieHeader(bs);
     }
     this.parseTags = function() {
 	//	console.debug('parseTags');

@@ -1,14 +1,22 @@
-var SWFBuilder = function(swfheader, swftags) {
+var SWFBuilder = function(swfheader, swfmovieheader, swftags) {
     this.swfheader = swfheader;
+    this.swfmovieheader = swfmovieheader;
     this.swftags = swftags;
     this.output = function() {
-	var bs = new Bitstream();
-        this.buildHeader(bs);
-        this.buildTags(bs);
-        return bs.output();
+	var bs_header = new Bitstream();
+	var bs_movie = new Bitstream();
+        this.buildMovieHeader(bs_movie);
+        this.buildTags(bs_movie);
+        var movie_data = bs_movie.output();
+        this.swfheader.FileLength = 8 + movie_data.length;
+        this.buildHeader(bs_header);
+        return bs_header.output()+movie_data;
     }
     this.buildHeader = function(bs) {
 	this.swfheader.build(bs);
+    }
+    this.buildMovieHeader = function(bs) {
+	this.swfmovieheader.build(bs);
     }
     this.buildTags = function(bs) {
 	for (var i = 0, n = this.swftags.length ; i < n ; i++) {

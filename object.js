@@ -672,14 +672,21 @@ var SWFHeader = function(bs) {
 	this.Signature  = bs.getData(3);
 	this.Version    = bs.getUI8();
 	this.FileLength = bs.getUI32LE();
-	this.FrameSize  = new SWFRECT(bs);
-	this.FrameRate  = bs.getUI16LE();
-	this.FrameCount = bs.getUI16LE();
     }
     this.build = function(bs) {
 	bs.putData(this.Signature, 3);
 	bs.putUI8(this.Version);
 	bs.putUI32LE(this.FileLength);
+    }
+}
+
+var SWFMovieHeader = function(bs) {
+    if (bs) {
+	this.FrameSize  = new SWFRECT(bs);
+	this.FrameRate  = bs.getUI16LE();
+	this.FrameCount = bs.getUI16LE();
+    }
+    this.build = function(bs) {
         this.FrameSize.build(bs);
 	bs.putUI16LE(this.FrameRate);
 	bs.putUI16LE(this.FrameCount);
