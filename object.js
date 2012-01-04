@@ -5,6 +5,7 @@ var SWFRECT = function(bs) {
     if (bs) {
 	bs.byteAlign();
 	var Nbits = bs.getUIBits(5);
+        this.Nbits = Nbits;
 	this.Xmin = bs.getSIBits(Nbits);
 	this.Xmax = bs.getSIBits(Nbits);
 	this.Ymin = bs.getSIBits(Nbits);
