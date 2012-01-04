@@ -6,7 +6,6 @@
   <script type="text/javascript" src="parser.js"> </script>
   <script type="text/javascript" src="builder.js"> </script>
   <script type="text/javascript" src="editor.js"> </script>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
  </head>
  <body>
@@ -34,14 +33,12 @@
       var data = swfed.output();
       var download = document.getElementById("download");
       download.href="data:octetapplication/x-shockwave-flash;base64,"+btoa(data);
-      var swfed2 = new SWFEditor();
-      swfed2.input(data);
-      swfed2.dump();
 }
 
   </script>
   <input id="myfile" type="file" />
-  <input type="submit" value="反映" onClick="update();return false;" name="submit"> 
+  <input type="submit" value="rebuild" onClick="update();return false;" name="submit"> 
+  =>
   <a id="download" href=""> download </a>
  </body>
 </html>
