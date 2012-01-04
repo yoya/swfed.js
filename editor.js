@@ -12,12 +12,12 @@ var SWFEditor = function() {
     this.dump = function() {
 	var swfheader = this.swfheader;
 	var swftags   = this.swftags;
-	console.debug(swfheader);
+	console.log(swfheader);
 	for (var i = 0, n = swftags.length ; i < n ; i++) {
 	    swftag = swftags[i];
-	    console.debug('code:'+swftag.code+' length:'+swftag.length);
+	    console.log('code:'+swftag.code+' length:'+swftag.length);
 	    if (swftag.data) {
-		console.debug(swftag.data);
+		console.log(swftag.data);
 	    }
 	}
     }
