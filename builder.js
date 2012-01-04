@@ -14,7 +14,7 @@ var SWFBuilder = function(swfheader, swftags) {
 	for (var i = 0, n = this.swftags.length ; i < n ; i++) {
             bs.byteAlign();
             var swftag = this.swftags[i];
-            var tag_code = swftag.tag_code;
+            var tag_code = swftag.data.tag_code;
             var bs_tag = new Bitstream();
             swftag.data.build(bs_tag);
             var data = bs_tag.output();
