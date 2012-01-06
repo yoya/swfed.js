@@ -40,7 +40,7 @@ var SWFBuilder = function(swfheader, swfmovieheader, swftags) {
                 var longFormat = false;
                 break;
             }
-            if ((longFormat === false) || (length < 0x3f)) {
+            if ((longFormat === false) && (length < 0x3f)) {
                 var tagAndLength = (tag_code << 6) | length;
                 bs.putUI16LE(tagAndLength);
             } else {
