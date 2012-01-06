@@ -12,6 +12,7 @@ var SWFRECT = function(bs) {
 	this.Ymax = bs.getSIBits(Nbits);
     }
     this.build = function(bs) {
+	bs.byteAlign();
         var XminBits = bs.need_bits_signed(this.Xmin);
         var XmaxBits = bs.need_bits_signed(this.Xmax);
         var YminBits = bs.need_bits_signed(this.Ymin);
@@ -55,6 +56,7 @@ var SWFMATRIX = function(bs) {
 	this.TranslateX = bs.getSIBits(nTranslateBits);
 	this.TranslateY = bs.getSIBits(nTranslateBits);
         this.build = function(bs) {
+            bs.byteAlign();
             if ((this.ScaleX === 0x10000) && (this.ScaleY === 0x10000)) {
                 bs.putUIBit(0); // HasScale
             } else {
@@ -736,7 +738,6 @@ var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
             this.CharacterId = bs.getUI16LE();
             this.Depth = bs.getUI16LE();
             this.Matrix = new SWFMATRIX(bs);
-            bs.byteAlign();
             if (byteOffset + length < bs.byte_offset) {
                 this.Colortransform = new SWFCXFORM(bs);
             }
@@ -779,7 +780,6 @@ var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
             bs.putUI16LE(this.CharacterId);
             bs.putUI16LE(this.Depth);
             this.Matrix.build(bs);
-            bs.byteAlign();
             if ('Colortransform' in this) {
                 this.Colortransform.build(bs);
             }
