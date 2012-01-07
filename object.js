@@ -284,7 +284,6 @@ var SWFFILLSTYLEARRAY = function(bs, tag_code) {
     }
     this.build = function(bs, tag_code) {
         fillStyleCount = this.FillStyles.length;
-	bs.putUI8(fillStyleCount);
 	if ((tag_code > 2) && (fillStyleCount >= 0xff)) {
             bs.putUI8(0xff);
 	    bs.putUI16LE(fillStyleCount);
@@ -312,7 +311,6 @@ var SWFLINESTYLEARRAY = function(bs, tag_code) {
     }
     this.build = function(bs, tag_code) {
         lineStyleCount = this.LineStyles.length;
-	bs.putUI8(lineStyleCount);
 	if ((tag_code > 2) && (lineStyleCount >= 0xff)) {
             bs.putUI8(0xff);
 	    bs.putUI16LE(lineStyleCount);
