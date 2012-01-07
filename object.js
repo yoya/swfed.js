@@ -460,13 +460,13 @@ var SWFSHAPERECORDS = function(bs, tag_code, currentNumBits) {
 	    if (this.StateNewStyles) {
 		this.FillStyles.build(bs, tag_code);
 		this.LineStyles.build(bs, tag_code);
-                currentNumBits.FillBits = bs.need_bits_unsigned(this.FillStyles.FillStyles.length + 1);
-                currentNumBits.LineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length + 1);
+                currentNumBits.FillBits = bs.need_bits_unsigned(this.FillStyles.FillStyles.length);
+                currentNumBits.LineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length);
                 var numBits = (currentNumBits.FillBits << 4) | currentNumBits.LineBits;
 		bs.putUI8(numBits);
 	    }
 	} else { // EndShapeRecord
-            bs.putUIBits(0, 4);
+            bs.putUIBits(0, 5);
 	}
     }
 }
@@ -492,8 +492,8 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
     this.build = function(bs, tag_code) {
 	this.FillStyles.build(bs, tag_code);
 	this.LineStyles.build(bs, tag_code);
-        this.NumFillBits = bs.need_bits_unsigned(this.FillStyles.FillStyles.length + 1);
-        this.NumLineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length + 1);
+        this.NumFillBits = bs.need_bits_unsigned(this.FillStyles.FillStyles.length);
+        this.NumLineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length);
 	var numBits =  (this.NumFillBits << 4) | this.NumLineBits;
         bs.putUI8(numBits);
 	var numBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
