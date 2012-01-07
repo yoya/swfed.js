@@ -1,4 +1,5 @@
 var SWFLoader = function(){
+    var error_notified = false;
     this.load = function(url, parser) {
         var req = new XMLHttpRequest();
         if (req) {
@@ -13,7 +14,10 @@ var SWFLoader = function(){
                             parser.progress(true); // finish
                         }
                     } else {
-                        alert('failed to load file:'+url+' code:'+req.status);
+                        if (error_notified === false)  {
+                            alert('failed to load file:'+url+' code:'+req.status);
+                            error_notified = true;
+                        }
                     }
                 }
             }
