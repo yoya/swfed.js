@@ -347,10 +347,10 @@ var SWFSHAPERECORDS = function(bs, tag_code, currentNumBits) {
 		    }
 		}
 	    } else { // CurvedEdgeRecord
-		this.ControlDeltaX = bs.getUIBits(numBits + 2);
-		this.ControlDeltaY = bs.getUIBits(numBits + 2);
-		this.AnchorDeltaX = bs.getUIBits(numBits + 2);
-		this.AnchorDeltaY = bs.getUIBits(numBits + 2);
+		this.ControlDeltaX = bs.getSIBits(numBits + 2);
+		this.ControlDeltaY = bs.getSIBits(numBits + 2);
+		this.AnchorDeltaX = bs.getSIBits(numBits + 2);
+		this.AnchorDeltaY = bs.getSIBits(numBits + 2);
 	    }
 	} else if (first5Bits) { // StypeChangeRecord
 	    this.StateNewStyles  = (first5Bits >> 3) & 1;
@@ -427,10 +427,10 @@ var SWFSHAPERECORDS = function(bs, tag_code, currentNumBits) {
                 } else {
                     numBits -= 2;
                 }
-		bs.putUIBits(this.ControlDeltaX, numBits + 2);
-                bs.putUIBits(this.ControlDeltaY, numBits + 2);
-		bs.putUIBits(this.AnchorDeltaX,  numBits + 2);
-                bs.putUIBits(this.AnchorDeltaY,  numBits + 2);
+		bs.putSIBits(this.ControlDeltaX, numBits + 2);
+                bs.putSIBits(this.ControlDeltaY, numBits + 2);
+		bs.putSIBits(this.AnchorDeltaX,  numBits + 2);
+                bs.putSIBits(this.AnchorDeltaY,  numBits + 2);
 	    }
 	} else if ('StateNewStyles' in this) { // StypeChangeRecord
 	    bs.putUIBit(this.StateNewStyles)
