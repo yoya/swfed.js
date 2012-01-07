@@ -741,14 +741,14 @@ var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
             }
         } else { // PlaceObject2
             var placeFlag = bs.getUI8();
-            this.PlaceFlagHasClipActions = placeFlag & 0x80;
-            this.PlaceFlagHasClipDepth   = placeFlag & 0x40;
-            this.PlaceFlagHasName        = placeFlag & 0x20;
-            this.PlaceFlagHasRatio       = placeFlag & 0x10;
-            this.PlaceFlagHasColorTransform = placeFlag & 0x08;
-            this.PlaceFlagHasMatrix      = placeFlag & 0x04;
-            this.PlaceFlagHasCharacter   = placeFlag & 0x02;
-            this.PlaceFlagHasMove        = placeFlag & 0x01;
+            this.PlaceFlagHasClipActions = (placeFlag >> 7) & 0x01
+            this.PlaceFlagHasClipDepth   = (placeFlag >> 6) & 0x01
+            this.PlaceFlagHasName        = (placeFlag >> 5) & 0x01
+            this.PlaceFlagHasRatio       = (placeFlag >> 4) & 0x01
+            this.PlaceFlagHasColorTransform = (placeFlag >> 3) & 0x01
+            this.PlaceFlagHasMatrix      = (placeFlag >> 2) & 0x01
+            this.PlaceFlagHasCharacter   = (placeFlag >> 1) & 0x01;
+            this.PlaceFlagHasMove        =  placeFlag       & 0x01;
             this.Depth = bs.getUI16LE();
             if (this.PlaceFlagHasCharacter) {
                 this.CharacterId = bs.getUI16LE();
