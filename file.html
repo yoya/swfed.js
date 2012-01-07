@@ -17,7 +17,6 @@
       var myfile = document.getElementById("myfile")
       myfile.addEventListener("change", onChangeFile, false);
   }
-
   var onChangeFile = function(e) {
        var file = e.target.files[0];
        var reader = new FileReader();
@@ -25,7 +24,7 @@
            var data = e.target.result;
            swfed = new SWFEditor();
            swfed.input(data);
-           swfed.dump();
+//           swfed.dump();
        }
        reader.readAsBinaryString(file);
   }
@@ -33,8 +32,10 @@
       var data = swfed.output();
       var download = document.getElementById("download");
       download.href="data:application/octet-stream;base64,"+btoa(data);
-}
-
+      var swfed2 = new SWFEditor();
+      swfed2.input(data);
+      swfed2.dump();
+ }
   </script>
   <input id="myfile" type="file" />
   <input type="submit" value="rebuild" onClick="update();return false;" name="submit"> 
