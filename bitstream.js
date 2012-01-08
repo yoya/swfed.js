@@ -6,7 +6,12 @@ var Bitstream = function() {
     this.input = function(data) {
 	this.data = data;
     }
-    this.output = function(data) {
+    this.output = function() {
+        if (this.bit_offset === 8) {
+            this.byteCarry();
+            this.data += String.fromCharCode(this.work_bits);
+            this.work_bits = 0;
+        }
         var data = this.data;
         var ret_data_len = (this.bit_offset)?this.byte_offset+1:this.byte_offset;
         if (ret_data_len < data.length) {
