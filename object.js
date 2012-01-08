@@ -325,11 +325,11 @@ var SWFLINESTYLEARRAY = function(bs, tag_code) {
 
 var SWFSHAPERECORDS = function(bs, tag_code, currentNumBits) {
     if (bs) {
-	var first5Bits = bs.getUIBits(5);
-	this.TypeFlag = (first5Bits >> 4) & 1;
+	var first6Bits = bs.getUIBits(6);
+	this.TypeFlag = (first6Bits >> 5) & 1;
 	if (this.TypeFlag) { // Edge records
-	    this.StraightFlag = (first5Bits >> 3) & 1;
-	    var numBits = ((first5Bits & 0x07) << 1) | bs.getUIBit();
+	    this.StraightFlag = (first6Bits >> 4) & 1;
+	    var numBits = first6Bits & 0x0f;
 	    this.NumBits = numBits;
 	    if (this.StraightFlag) { // StraightEdgeRecord
 		this.GeneralLineFlag = bs.getUIBit();
@@ -352,12 +352,12 @@ var SWFSHAPERECORDS = function(bs, tag_code, currentNumBits) {
 		this.AnchorDeltaX = bs.getSIBits(numBits + 2);
 		this.AnchorDeltaY = bs.getSIBits(numBits + 2);
 	    }
-	} else if (first5Bits) { // StypeChangeRecord
-	    this.StateNewStyles  = (first5Bits >> 3) & 1;
-	    this.StateLineStyle  = (first5Bits >> 2) & 1;
-	    this.StateFillStyle1 = (first5Bits >> 1) & 1;
-	    this.StateFillStyle0 =  first5Bits       & 1;
-	    this.StateMoveTo = bs.getUIBit();
+	} else if (first6Bits) { // StypeChangeRecord
+	    this.StateNewStyles  = (first6Bits >> 4) & 1;
+	    this.StateLineStyle  = (first6Bits >> 3) & 1;
+	    this.StateFillStyle1 = (first6Bits >> 2) & 1;
+	    this.StateFillStyle0 = (first6Bits >> 1) & 1;
+	    this.StateMoveTo     =  first6Bits       & 1;
 	    if (this.StateMoveTo) {
 		moveBits = bs.getUIBits(5);
 		this.MoveBits = moveBits;
