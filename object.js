@@ -427,6 +427,7 @@ var SWFSHAPERECORDS = function(bs, tag_code, currentNumBits) {
                 } else {
                     numBits -= 2;
                 }
+                bs.putUIBits(numBits, 4);
 		bs.putSIBits(this.ControlDeltaX, numBits + 2);
                 bs.putSIBits(this.ControlDeltaY, numBits + 2);
 		bs.putSIBits(this.AnchorDeltaX,  numBits + 2);
