@@ -323,152 +323,162 @@ var SWFLINESTYLEARRAY = function(bs, tag_code) {
     }
 }
 
-var SWFSHAPERECORDS = function(bs, tag_code, currentNumBits) {
+var SWFENDSHAPERECORD = function(bs) {
     if (bs) {
-	var first6Bits = bs.getUIBits(6);
-	this.TypeFlag = (first6Bits >> 5) & 1;
-	if (this.TypeFlag) { // Edge records
-	    this.StraightFlag = (first6Bits >> 4) & 1;
-	    var numBits = first6Bits & 0x0f;
-	    this.NumBits = numBits;
-	    if (this.StraightFlag) { // StraightEdgeRecord
-		this.GeneralLineFlag = bs.getUIBit();
-		if (this.GeneralLineFlag) {
-		    this.DeltaX = bs.getSIBits(numBits + 2);
-		    this.DeltaY = bs.getSIBits(numBits + 2);
-		} else {
-		    this.VertLineFlag = bs.getUIBit();
-		    if (this.VertLineFlag) {
-			this.DeltaX = 0;
-			this.DeltaY = bs.getSIBits(numBits + 2);
-		    } else {
-			this.DeltaX = bs.getSIBits(numBits + 2);
-			this.DeltaY = 0;
-		    }
-		}
-	    } else { // CurvedEdgeRecord
-		this.ControlDeltaX = bs.getSIBits(numBits + 2);
-		this.ControlDeltaY = bs.getSIBits(numBits + 2);
-		this.AnchorDeltaX = bs.getSIBits(numBits + 2);
-		this.AnchorDeltaY = bs.getSIBits(numBits + 2);
-	    }
-	} else if (first6Bits) { // StypeChangeRecord
-	    this.StateNewStyles  = (first6Bits >> 4) & 1;
-	    this.StateLineStyle  = (first6Bits >> 3) & 1;
-	    this.StateFillStyle1 = (first6Bits >> 2) & 1;
-	    this.StateFillStyle0 = (first6Bits >> 1) & 1;
-	    this.StateMoveTo     =  first6Bits       & 1;
-	    if (this.StateMoveTo) {
-		moveBits = bs.getUIBits(5);
-		this.MoveBits = moveBits;
-		this.MoveX = bs.getSIBits(moveBits); // MoveDeltaX
-		this.MoveY = bs.getSIBits(moveBits); // MoveDeltaY
-	    }
-	    if (this.StateFillStyle0) {
-		this.FillStyle0 = bs.getUIBits(currentNumBits.FillBits);
-	    }
-	    if (this.StateFillStyle1) {
-		this.FillStyle0 = bs.getUIBits(currentNumBits.FillBits);
-	    }
-	    ; 
-	    if (this.StateLineStyle) {
-		this.LineStyle = bs.getUIBits(currentNumBits.LineBits);
-	    }
-	    ; 
-	    if (this.StateNewStyles) {
-		this.FillStyles = new SWFFILLSTYLEARRAY(bs, tag_code);
-		this.LineStyles = new SWFLINESTYLEARRAY(bs, tag_code);
-		var numBits = bs.getUI8();
-		currentNumBits.FillBits = this.NumFillBits = numBits >> 4;
-		currentNumBits.LineBits = this.NumLineBits = numBits & 0x0f;
-	    }
-	} else { // EndShapeRecord
-	    this.EndOfShape = 0;
-	}
+        this.EndOfShape = 0;
     }
-    this.build = function(bs, tag_code, currentNumBits) {
-        bs.putUIBit(this.TypeFlag);
-	if (this.TypeFlag) { // Edge records
-            bs.putUIBit(this.StraightFlag);
-	    if (this.StraightFlag) { // StraightEdgeRecord
-                var deltaXBits = bs.need_bits_signed(this.DeltaX);
-                var deltaYBits = bs.need_bits_signed(this.DeltaY);
-                var numBits = (deltaXBits > deltaYBits)?deltaXBits:deltaYBits;
-                if (numBits < 2) {
-                    numBits = 0;
-                } else {
-                    numBits -= 2;
-                }
-                bs.putUIBits(numBits, 4);
-		if (this.DeltaX && this.DeltaY) {
-                    bs.putUIBit(1); // GeneralLineFlag
-		    bs.putSIBits(this.DeltaX, numBits + 2);
-		    bs.putSIBits(this.DeltaY, numBits + 2);
-		} else {
-                    bs.putUIBit(0); // GeneralLineFlag
-		    if (this.DeltaY) {
-                        bs.putUIBit(1); // VertLineFlag
-			bs.putSIBits(this.DeltaY, numBits + 2);
-		    } else {
-                        bs.putUIBit(0); // VertLineFlag
-			bs.putSIBits(this.DeltaX, numBits + 2);
-		    }
-		}
-	    } else { // CurvedEdgeRecord
-                var controlDeltaXBits = bs.need_bits_signed(this.ControlDeltaX);
-                var controlDeltaYBits = bs.need_bits_signed(this.ControlDeltaY);
-                var anchorDeltaXBits = bs.need_bits_signed(this.AnchorDeltaX);
-                var anchorDeltaYBits = bs.need_bits_signed(this.AnchorDeltaY);
-                var numBits = (controlDeltaXBits > controlDeltaYBits)?controlDeltaXBits:controlDeltaYBits;
-                numBits = (numBits > anchorDeltaXBits)?numBits:anchorDeltaXBits;
-                numBits = (numBits > anchorDeltaYBits)?numBits:anchorDeltaYBits;
-                if (numBits < 2) {
-                    numBits = 0;
-                } else {
-                    numBits -= 2;
-                }
-                bs.putUIBits(numBits, 4);
-		bs.putSIBits(this.ControlDeltaX, numBits + 2);
-                bs.putSIBits(this.ControlDeltaY, numBits + 2);
-		bs.putSIBits(this.AnchorDeltaX,  numBits + 2);
-                bs.putSIBits(this.AnchorDeltaY,  numBits + 2);
-	    }
-	} else if ('StateNewStyles' in this) { // StypeChangeRecord
-	    bs.putUIBit(this.StateNewStyles)
-	    bs.putUIBit(this.StateLineStyle)
-	    bs.putUIBit(this.StateFillStyle1)
-	    bs.putUIBit(this.StateFillStyle0);
-	    bs.putUIBit(this.StateMoveTo);
-	    if (this.StateMoveTo) {
-                var moveXBits = bs.need_bits_signed(this.MoveX);
-                var moveYBits = bs.need_bits_signed(this.MoveY);
-		var moveBits = (moveXBits > moveYBits)?moveXBits:moveYBits;
-                bs.putUIBits(moveBits, 5);
-		bs.putSIBits(this.MoveX, moveBits); // MoveDeltaX
-		bs.putSIBits(this.MoveY, moveBits); // MoveDeltaY
-	    }
-	    if (this.StateFillStyle0) {
-		bs.putUIBits(this.FillStyle0, currentNumBits.FillBits);
-	    }
-	    if (this.StateFillStyle1) {
-		bs.putUIBits(this.FillStyle0, currentNumBits.FillBits);
-	    }
-	    ; 
-	    if (this.StateLineStyle) {
-		bs.putUIBits(this.LineStyle, currentNumBits.LineBits);
-	    }
-	    ; 
-	    if (this.StateNewStyles) {
-		this.FillStyles.build(bs, tag_code);
-		this.LineStyles.build(bs, tag_code);
-                currentNumBits.FillBits = bs.need_bits_unsigned(this.FillStyles.FillStyles.length);
-                currentNumBits.LineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length);
-                var numBits = (currentNumBits.FillBits << 4) | currentNumBits.LineBits;
-		bs.putUI8(numBits);
-	    }
-	} else { // EndShapeRecord
-            bs.putUIBits(0, 5);
-	}
+    this.build = function(bs) {
+        bs.putUIBits(0, 6); // TypeFlag:0 + EndOfShape:0(5bits)
+    }
+}
+
+var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
+    if (bs) {
+        this.StateNewStyles  = (changeFlag >> 4) & 1;
+        this.StateLineStyle  = (changeFlag >> 3) & 1;
+        this.StateFillStyle1 = (changeFlag >> 2) & 1;
+        this.StateFillStyle0 = (changeFlag >> 1) & 1;
+        this.StateMoveTo     =  changeFlag       & 1;
+        if (this.StateMoveTo) {
+            moveBits = bs.getUIBits(5);
+            this.MoveBits = moveBits;
+            this.MoveX = bs.getSIBits(moveBits); // MoveDeltaX
+            this.MoveY = bs.getSIBits(moveBits); // MoveDeltaY
+        }
+        if (this.StateFillStyle0) {
+            this.FillStyle0 = bs.getUIBits(currentNumBits.FillBits);
+        }
+        if (this.StateFillStyle1) {
+            this.FillStyle0 = bs.getUIBits(currentNumBits.FillBits);
+        }
+        ; 
+        if (this.StateLineStyle) {
+            this.LineStyle = bs.getUIBits(currentNumBits.LineBits);
+        }
+        ; 
+        if (this.StateNewStyles) { // XXX tag_code;
+            this.FillStyles = new SWFFILLSTYLEARRAY(bs, tag_code);
+            this.LineStyles = new SWFLINESTYLEARRAY(bs, tag_code);
+            var numBits = bs.getUI8();
+            currentNumBits.FillBits = this.NumFillBits = numBits >> 4;
+            currentNumBits.LineBits = this.NumLineBits = numBits & 0x0f;
+        }
+    }
+    this.build = function(bs, currentNumBits) {
+        bs.putUIBit(0); // TypeFlag:0
+        bs.putUIBit(this.StateNewStyles)
+        bs.putUIBit(this.StateLineStyle)
+        bs.putUIBit(this.StateFillStyle1)
+        bs.putUIBit(this.StateFillStyle0);
+        bs.putUIBit(this.StateMoveTo);
+        if (this.StateMoveTo) {
+            var moveXBits = bs.need_bits_signed(this.MoveX);
+            var moveYBits = bs.need_bits_signed(this.MoveY);
+            var moveBits = (moveXBits > moveYBits)?moveXBits:moveYBits;
+            bs.putUIBits(moveBits, 5);
+            bs.putSIBits(this.MoveX, moveBits); // MoveDeltaX
+            bs.putSIBits(this.MoveY, moveBits); // MoveDeltaY
+        }
+        if (this.StateFillStyle0) {
+            bs.putUIBits(this.FillStyle0, currentNumBits.FillBits);
+        }
+        if (this.StateFillStyle1) {
+            bs.putUIBits(this.FillStyle0, currentNumBits.FillBits);
+        }
+        ; 
+        if (this.StateLineStyle) {
+            bs.putUIBits(this.LineStyle, currentNumBits.LineBits);
+        }
+        ; 
+        if (this.StateNewStyles) {
+            this.FillStyles.build(bs, tag_code);
+            this.LineStyles.build(bs, tag_code);
+            currentNumBits.FillBits = bs.need_bits_unsigned(this.FillStyles.FillStyles.length);
+            currentNumBits.LineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length);
+            var numBits = (currentNumBits.FillBits << 4) | currentNumBits.LineBits;
+            bs.putUI8(numBits);
+        }
+    }
+}
+
+
+var SWFSTRAIGHTEDGERECORD = function(bs, numBits) {
+    this.TypeFlag = 1;
+    this.StraightFlag = 1;
+    if (bs) {
+        this.NumBits = numBits;
+        this.GeneralLineFlag = bs.getUIBit();
+        if (this.GeneralLineFlag) {
+            this.DeltaX = bs.getSIBits(numBits + 2);
+            this.DeltaY = bs.getSIBits(numBits + 2);
+        } else {
+            this.VertLineFlag = bs.getUIBit();
+            if (this.VertLineFlag) {
+                this.DeltaX = 0;
+                this.DeltaY = bs.getSIBits(numBits + 2);
+            } else {
+                this.DeltaX = bs.getSIBits(numBits + 2);
+                this.DeltaY = 0;
+            }
+        }
+    }
+    this.build = function(bs) {
+        bs.putUIBits(3, 2); // TypeFlag:1 + StraightFlag:1
+        var deltaXBits = bs.need_bits_signed(this.DeltaX);
+        var deltaYBits = bs.need_bits_signed(this.DeltaY);
+        var numBits = (deltaXBits > deltaYBits)?deltaXBits:deltaYBits;
+        if (numBits < 2) {
+            numBits = 0;
+        } else {
+            numBits -= 2;
+        }
+        bs.putUIBits(numBits, 4);
+        if (this.DeltaX && this.DeltaY) {
+            bs.putUIBit(1); // GeneralLineFlag
+            bs.putSIBits(this.DeltaX, numBits + 2);
+            bs.putSIBits(this.DeltaY, numBits + 2);
+        } else {
+            bs.putUIBit(0); // GeneralLineFlag
+            if (this.DeltaY) {
+                bs.putUIBit(1); // VertLineFlag
+                bs.putSIBits(this.DeltaY, numBits + 2);
+            } else {
+                bs.putUIBit(0); // VertLineFlag
+                bs.putSIBits(this.DeltaX, numBits + 2);
+            }
+        }
+    }
+}
+
+var SWFCURVEDEDGERECORD = function(bs, numBits) {
+    this.TypeFlag = 1;
+    this.StraightFlag = 0;
+    if (bs) {
+        this.NumBits = numBits;
+        this.ControlDeltaX = bs.getSIBits(numBits + 2);
+        this.ControlDeltaY = bs.getSIBits(numBits + 2);
+        this.AnchorDeltaX = bs.getSIBits(numBits + 2);
+        this.AnchorDeltaY = bs.getSIBits(numBits + 2);
+    }
+    this.build = function(bs) {
+        bs.putUIBits(2, 2); // TypeFlag:1 + StraightFlag:0
+        var controlDeltaXBits = bs.need_bits_signed(this.ControlDeltaX);
+        var controlDeltaYBits = bs.need_bits_signed(this.ControlDeltaY);
+        var anchorDeltaXBits = bs.need_bits_signed(this.AnchorDeltaX);
+        var anchorDeltaYBits = bs.need_bits_signed(this.AnchorDeltaY);
+        var numBits = (controlDeltaXBits > controlDeltaYBits)?controlDeltaXBits:controlDeltaYBits;
+        numBits = (numBits > anchorDeltaXBits)?numBits:anchorDeltaXBits;
+        numBits = (numBits > anchorDeltaYBits)?numBits:anchorDeltaYBits;
+        if (numBits < 2) {
+            numBits = 0;
+        } else {
+            numBits -= 2;
+        }
+        bs.putUIBits(numBits, 4);
+        bs.putSIBits(this.ControlDeltaX, numBits + 2);
+        bs.putSIBits(this.ControlDeltaY, numBits + 2);
+        bs.putSIBits(this.AnchorDeltaX,  numBits + 2);
+        bs.putSIBits(this.AnchorDeltaY,  numBits + 2);
     }
 }
 
@@ -479,13 +489,26 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
 	var numBits = bs.getUI8();
 	this.NumFillBits = numBits >> 4;
 	this.NumLineBits = numBits & 0x0f;
-	var numBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
+	var currentNumBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
 	var done = false;
 	this.ShapeRecords = [];
 	while (done === false) {
-	    var shape = new SWFSHAPERECORDS(bs, tag_code, numBits);
+            var first6Bits = bs.getUIBits(6);
+            if (first6Bits & 0x20) { // Edge
+                var numBits = first6Bits & 0x0f;
+                if (first6Bits & 0x10) { // StraigtEdge (11XXXX)
+                    var shape = new SWFSTRAIGHTEDGERECORD(bs, numBits);
+                } else { // CurvedEdge (10XXXX)
+                    var shape = new SWFCURVEDEDGERECORD(bs, numBits);
+                }
+            } else if (first6Bits) { // ChangeStyle (0XXXXX)
+                var changeFlag = first6Bits;
+                var shape = new SWFSTYLECHANGERECORD(bs, tag_code, changeFlag, currentNumBits);
+            } else { // EndOfShape (000000)
+                var shape = new SWFENDSHAPERECORD(bs);
+            }
 	    this.ShapeRecords.push(shape);
-	    if ('EndOfShape' in shape) {
+	    if (shape instanceof SWFENDSHAPERECORD) {
 		done = true;
 	    }
 	}
@@ -500,7 +523,7 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
 	var numBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
         var shapeRecords = this.ShapeRecords;
 	for (var i = 0, n = shapeRecords.length ; i < n ; i++){
-	    shapeRecords[i].build(bs, tag_code, numBits);
+	    shapeRecords[i].build(bs, numBits);
 	}
     }
     this.toString = function() {
