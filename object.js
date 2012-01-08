@@ -349,7 +349,7 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
             this.FillStyle0 = bs.getUIBits(currentNumBits.FillBits);
         }
         if (this.StateFillStyle1) {
-            this.FillStyle0 = bs.getUIBits(currentNumBits.FillBits);
+            this.FillStyle1 = bs.getUIBits(currentNumBits.FillBits);
         }
         ; 
         if (this.StateLineStyle) {
@@ -383,7 +383,7 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
             bs.putUIBits(this.FillStyle0, currentNumBits.FillBits);
         }
         if (this.StateFillStyle1) {
-            bs.putUIBits(this.FillStyle0, currentNumBits.FillBits);
+            bs.putUIBits(this.FillStyle1, currentNumBits.FillBits);
         }
         ; 
         if (this.StateLineStyle) {
