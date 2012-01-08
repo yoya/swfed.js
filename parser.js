@@ -92,6 +92,9 @@ var SWFParser = function(editor) {
 	    case 35: // DefineBitsJPEG3
 		data = new SWFDefineBitsJPEG(bs, tag_code, length);
 		break;
+	    case 8: // JPEGTables
+		data = new SWFJPEGTables(bs, tag_code, length);
+		break;
 	    case 9: // SetBackgroundColor
 		data = new SWFSetBackgroundColor(bs, tag_code);
 		break;

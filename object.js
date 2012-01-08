@@ -889,6 +889,17 @@ var SWFDefineBitsJPEG = function(bs, tag_code, length) { // code:6, 21, 35
     }
 }
 
+var SWFJPEGTables = function(bs, tag_code, length) { // code:8
+    if (bs) {
+        this.tag_code = tag_code;
+        var imageDataLen = length;
+	this.JPEGData = bs.getData(length);
+    }
+    this.build = function(bs) {
+	bs.putData(this.JPEGData);
+    }
+}
+
 var SWFSetBackgroundColor = function(bs, tag_code) { // 9
     if (bs) {
         this.tag_code = tag_code;
