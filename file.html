@@ -86,7 +86,7 @@
             case 21: // DefineBitsJPEG2
               var swfjpeg = new SWFJpeg();
               var jpegData = swfjpeg.outputStdJpeg(tag.data.ImageData);
-              tag_html = "<img src=\"data:image/jpeg;base64,"+btoa(jpegData)+"\" />";
+              tag_html = "CharacterID:"+tag.data.CharacterID+"<br /> <img src=\"data:image/jpeg;base64,"+btoa(jpegData)+"\" />";
               break;
           }
           if (tag_html) {
