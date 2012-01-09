@@ -88,6 +88,12 @@ var Bitstream = function() {
 		  (this.data.charCodeAt(this.byte_offset++) & 0xff)
 		  << 8) << 8) << 8);
     }
+    this.getUI16BE = function() {
+	this.byteAlign();
+	return (this.data.charCodeAt(this.byte_offset++) & 0xff << 8 |
+		(this.data.charCodeAt(this.byte_offset++) & 0xff));
+    }
+
     this.getUIBit = function() {
 	this.byteCarry();
 	return (this.data.charCodeAt(this.byte_offset) >> (7 - this.bit_offset++)) & 0x1;

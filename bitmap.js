@@ -17,7 +17,7 @@ var SWFJpeg = function() {
             case ROS:
                 data = bitid.getDataUntil(null);
             default:
-                length = bitid.getUI16LE(2);
+                length = bitid.getUI16BE(2);
                 bitid.incrementOffset(-2, 0);
                 data = bitid.getData(length);
                 break;
