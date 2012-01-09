@@ -1,25 +1,32 @@
 var SWFJpeg = function() {
-    var SOI = "\xFF\xD8";
-    var SOF0 = "\xFF\xC0";
-    var DQT = "\xFF\xFE";
-    var DHT = "\xFF\xC4";
-    var SOS = "\xFF\xDA";
-    var EOD = "\xFF\xD9";
+    var SOI  = 0xFFD8;
+    var SOF0 = 0xFFC0;
+    var DQT  = 0xFFFE;
+    var DHT  = 0xFFC4;
+    var SOS  = 0xFFDA;
+    var EOD  = 0xFFD9;
     var stdJpegChunkOrder = [SOF0, DQT, DHT, SOS];
-    this.getChunkTable = function() {
-        var chunkTable = [];
-        while (marker = bitid.getData(2)) {
+    this.getChunkTable = function(jpegdata) {
+        if (jpegdata == null) {
+            return null;
+        }
+        var chunkTable = {};
+        bs = new Bitstream();
+        bs.input(jpegdata);
+        while (marker = bs.getUI16BE()) {
             switch (marker) {
             case SOI:
             case EOD:
                 data = "";
                 break; // skip
-            case ROS:
-                data = bitid.getDataUntil(null);
+            case SOS:
+                bs.incrementOffset(-2, 0);
+                data = bs.getDataUntil(null);
+                break;
             default:
-                length = bitid.getUI16BE(2);
-                bitid.incrementOffset(-2, 0);
-                data = bitid.getData(length);
+                length = bs.getUI16BE(2);
+                bs.incrementOffset(-4, 0);
+                data = bs.getData(length + 2);
                 break;
             }
             if (marker in chunkTable) {
@@ -30,19 +37,24 @@ var SWFJpeg = function() {
             dataInChunkList.push(data);
             chunkTable[marker] = dataInChunkList;
         }
+        console.debug(chunkTable);
+        return chunkTable;
     }
-    this.outoutStdJpeg = function(imageData, jpegTables) {
-        var jpegTablesChunkTable = this.getChunkList(jpegTables);
-        var imageDataChunkTable = this.getChunkList(imageData);
+    this.outputStdJpeg = function(imageData, jpegTables) {
+        var jpegTablesChunkTable = this.getChunkTable(jpegTables);
+        var imageDataChunkTable = this.getChunkTable(imageData);
         var jpegChunkList = [SOI];
         for (var i = 0, n = stdJpegChunkOrder.length ; i < n ; i++) {
             var marker = stdJpegChunkOrder[i];
             if (marker in imageDataChunkTable) {
                 var dataList = imageDataChunkTable[marker];
-            } else if (marker in jpegTables) {
-                var dataList = jpegTablesChunkTable[marker];
+            } else if (jpegTablesChunkTable) {
+                if (marker in jpegTablesChunkTable) {
+                    var dataList = jpegTablesChunkTable[marker];
+                }
             } else {
-                console.debug("marker(0x%02X) not found", marker);
+                console.error("marker(0x%02X) not found", marker);
+                console.error(marker);
                 continue; // skip
             }
             for (var j = 0, m = dataList.length ; j < m ; j++) {
