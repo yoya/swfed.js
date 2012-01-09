@@ -54,7 +54,11 @@ var Bitstream = function() {
     this.getDataUntil = function(delim) {
 	this.byteAlign();
 	var bo = this.byte_offset;
-	var delim_offset = this.data.indexOf(delim, bo);
+        if ((delim === null) || (delim === false)) {
+            var delim_offset = -1;
+        } else {
+            var delim_offset = this.data.indexOf(delim, bo);
+        }
 	if (delim_offset === -1) {
 	    var n = this.data.length - bo;
 	} else {
