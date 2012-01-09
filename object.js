@@ -1,3 +1,59 @@
+
+
+var SWFTagNames = {
+    0:"End",
+    1:"ShowFrame",
+    2:"DefineShape",
+    4:"PlaceObject",
+    5:"RemoveObject",
+    6:"DefineBits",
+    7:"DefineButton",
+    8:"JEGTables",
+    9:"SetBackgroundColor",
+    10:"DefineFont",
+    11:"DefineText",
+    12:"DoAction",
+    13:"DefineFontInfo",
+    14:"DefineSound",
+    15:"StartSound",
+    17:"DefineButtonSound",
+    18:"SoundStreamHead",
+    19:"SoundStreamBlock",
+    20:"DefineBitsLossless",
+    21:"DefineBitsJPEG2",
+    22:"DefineShape2",
+    23:"DefineButtonCxform",
+    24:"Protect",
+    26:"PlaceObject2",
+    28:"RemoveObject2",
+    32:"DefineShape3",
+    33:"DefineText2",
+    34:"DefineButton2",
+    35:"DefineBitsJPEG3",
+    36:"DefineBitsLossless2",
+    37:"DefineEditText",
+    39:"DefineSprite",
+    43:"FrameLabel",
+    45:"SoundStreamHead2",
+    46:"DefineMorphShape",
+    48:"DefineFont2",
+    56:"ExportAssets",
+    57:"ImportAssets",
+    58:"EnableDebugger",
+    59:"DoInitAction",
+    60:"DefineBideoStream",
+    61:"VideoFrame",
+};
+
+
+var SWFTagGetName = function(tag_code) {
+    if (tag_code in SWFTagNames) {
+        return SWFTagNames[tag_code];
+    }
+    return "Unknown";
+}
+
+
 /* Basic Structure */
 
     // SWF specific
@@ -25,6 +81,9 @@ var SWFRECT = function(bs) {
         bs.putSIBits(this.Xmax, Nbits);
 	bs.putSIBits(this.Ymin, Nbits);
 	bs.putSIBits(this.Ymax, Nbits);
+    }
+    this.toString = function() {
+	return "{Xmin:"+this.Xmin+", Xmax:"+this.Xmax+", Ymin:"+this.Ymin+", Ymax:"+this.Ymax+"}";
     }
 }
 
