@@ -1,5 +1,6 @@
 <html>
  <head>
+  <script type="text/javascript" src="iz.js"> </script>
   <script type="text/javascript" src="canvas.js"> </script>
   <script type="text/javascript" src="bitstream.js"> </script>
   <script type="text/javascript" src="object.js"> </script>
@@ -7,6 +8,13 @@
   <script type="text/javascript" src="builder.js"> </script>
   <script type="text/javascript" src="editor.js"> </script>
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <style type="text/css">
+  <!--
+      body {background: #f0ffff; }
+      table {border: 1px #800080 solid; }
+      tr,td {border: 1px #d080d0 solid; }
+   -->
+  </style>
  </head>
  <body>
 
@@ -16,6 +24,9 @@
 //    var mycanvas = new SWFCanvas("mycanvas");
       var myfile = document.getElementById("myfile")
       myfile.addEventListener("change", onChangeFile, false);
+      var dump_swfheader = document.getElementById("dump_header");
+      var dump_swfmovieheader = document.getElementById("dump_movieheader");
+      var dump_swftags = document.getElementById("dump_swftags");
   }
   var onChangeFile = function(e) {
        var file = e.target.files[0];
@@ -24,22 +35,76 @@
            var data = e.target.result;
            swfed = new SWFEditor();
            swfed.input(data);
-//           swfed.dump();
        }
        reader.readAsBinaryString(file);
   }
   var update = function() {
+      console.debug("---- input ----");
+      swfed.dump();
+      // swfheader
+      var headerKeys = ['Signature', 'Version', 'FileLength'];
+      dump_swfheader.innerHTML = "<table> </table>";
+      for (var i = 0, n = headerKeys.length ; i < n ; i++) {
+          var key = headerKeys[i];
+          var dump_row = dump_swfheader.insertRow(i);
+          var dump_cell = dump_row.insertCell();
+          dump_cell.innerText = key;
+          dump_cell = dump_row.insertCell(1);
+          dump_cell.innerText = swfed.swfheader[key];
+      }
+      // swfmovieheader
+      var movieheaderKeys = ['FrameCount', 'FrameRate', 'FrameSize'];
+      dump_swfmovieheader.innerHTML = "<table> </table>";
+      for (var i = 0, n = movieheaderKeys.length ; i < n ; i++) {
+          var key = movieheaderKeys[i];
+          var dump_row = dump_swfmovieheader.insertRow(i);
+          var dump_cell = dump_row.insertCell();
+          dump_cell.innerText = key;
+          dump_cell = dump_row.insertCell(1);
+          dump_cell.innerText = swfed.swfmovieheader[key];
+      }
+      // swftags
+      dump_swftags.innerHTML = "<table> </table>";
+      for (var i = 0, n = swfed.swftags.length ; i < n ; i++) {
+          var tag = swfed.swftags[i];
+          var tag_code = tag.tag_code;
+          var tag_name = SWFTagGetName(tag_code);
+          var dump_row = dump_swftags.insertRow(i);
+          var dump_cell = dump_row.insertCell();
+          dump_cell.innerText = tag_name + "("+tag_code+")";
+          dump_cell = dump_row.insertCell(1);
+          dump_cell.innerText = tag.length;
+          dump_cell = dump_row.insertCell(2);
+          var tag_data = tag.data;
+          switch (tag_code) {
+            case 9:// SetBackgroundColor
+              tag_data = tag.data.BackgroundColor;
+              break;
+          }
+          dump_cell.innerText = tag_data;
+      }
       var data = swfed.output();
       var download = document.getElementById("download");
       download.href="data:application/octet-stream;base64,"+btoa(data);
+      download.innerHTML = "Download";
+/*
       var swfed2 = new SWFEditor();
       swfed2.input(data);
+      console.debug("---- output ----");
       swfed2.dump();
- }
+*/
+  }
   </script>
   <input id="myfile" type="file" />
-  <input type="submit" value="rebuild" onClick="update();return false;" name="submit"> 
-  =>
-  <a id="download" target="_blank" href=""> Download </a>
+  <input type="submit" value="rebuild" onClick="update();return false;" name="submit">
+   => <a id="download" target="_blank" href=""> </a>
+<hr>
+<caption> header: </caption>
+ <table id="dump_swfheader"> </table>
+<caption> movieheader: </caption>
+ <table id="dump_swfmovieheader"> </table>
+<hr>
+<caption> swftags: </caption>
+ <table id="dump_swftags"> </table>
  </body>
 </html>
