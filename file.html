@@ -3,6 +3,7 @@
   <script type="text/javascript" src="iz.js"> </script>
   <script type="text/javascript" src="canvas.js"> </script>
   <script type="text/javascript" src="bitstream.js"> </script>
+  <script type="text/javascript" src="bitmap.js"> </script>
   <script type="text/javascript" src="object.js"> </script>
   <script type="text/javascript" src="parser.js"> </script>
   <script type="text/javascript" src="builder.js"> </script>
@@ -35,10 +36,11 @@
            var data = e.target.result;
            swfed = new SWFEditor();
            swfed.input(data);
+           dumpToBody();
        }
        reader.readAsBinaryString(file);
   }
-  var update = function() {
+  var dumpToBody = function() {
       console.debug("---- input ----");
       swfed.dump();
       // swfheader
@@ -75,24 +77,36 @@
           dump_cell = dump_row.insertCell(1);
           dump_cell.innerText = tag.length;
           dump_cell = dump_row.insertCell(2);
-          var tag_data = tag.data;
+          var tag_text = tag.data;
+          var tag_html = null;
           switch (tag_code) {
             case 9:// SetBackgroundColor
-              tag_data = tag.data.BackgroundColor;
+              tag_text = tag.data.BackgroundColor;
+              break;
+            case 21: // DefineBitsJPEG2
+              var swfjpeg = new SWFJpeg();
+              var jpegData = swfjpeg.outputStdJpeg(tag.data.ImageData);
+              tag_html = "<img src=\"data:image/jpeg;base64,"+btoa(jpegData)+"\" />";
               break;
           }
-          dump_cell.innerText = tag_data;
+          if (tag_html) {
+              dump_cell.innerHTML = tag_html;
+          } else{
+              dump_cell.innerText = tag_text;
+          }
       }
+  }
+  var update = function() {
+      dumpToBody();
       var data = swfed.output();
       var download = document.getElementById("download");
       download.href="data:application/octet-stream;base64,"+btoa(data);
       download.innerHTML = "Download";
-/*
+
       var swfed2 = new SWFEditor();
       swfed2.input(data);
       console.debug("---- output ----");
       swfed2.dump();
-*/
   }
   </script>
   <input id="myfile" type="file" />
