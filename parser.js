@@ -106,7 +106,7 @@ var SWFParser = function(editor) {
 		data = new SWFUnknownTag(bs, tag_code, length);
 		break;
 	    }
-	    var tag = {code:tag_code, length:length, data:data};
+	    var tag = {tag_code:tag_code, length:length, data:data};
 	    this.swftags.push(tag);
 	    bs.setOffset(tag_data_start_offset + length, 0);
 	    if (tag_code === 0) { // End
