@@ -4,8 +4,11 @@ var SWFJpeg = function() {
     var DQT  = 0xFFFE;
     var DHT  = 0xFFC4;
     var SOS  = 0xFFDA;
-    var EOD  = 0xFFD9;
+    var EOI  = 0xFFD9;
     var stdJpegChunkOrder = [SOF0, DQT, DHT, SOS];
+    this.dumpChunk = function(jpegdata) {
+        console.debug(this.getChunkTable(jpegdata));
+    }
     this.getChunkTable = function(jpegdata) {
         if (jpegdata == null) {
             return null;
@@ -16,8 +19,8 @@ var SWFJpeg = function() {
         while (marker = bs.getUI16BE()) {
             switch (marker) {
             case SOI:
-            case EOD:
-                data = "";
+            case EOI:
+                data = bs.fromUI16BE(marker);
                 break; // skip
             case SOS:
                 bs.incrementOffset(-2, 0);
@@ -37,13 +40,13 @@ var SWFJpeg = function() {
             dataInChunkList.push(data);
             chunkTable[marker] = dataInChunkList;
         }
-        console.debug(chunkTable);
         return chunkTable;
     }
     this.outputStdJpeg = function(imageData, jpegTables) {
         var jpegTablesChunkTable = this.getChunkTable(jpegTables);
         var imageDataChunkTable = this.getChunkTable(imageData);
-        var jpegChunkList = [SOI];
+        bs = new Bitstream();
+        var jpegChunkList = [bs.fromUI16BE(SOI)];
         for (var i = 0, n = stdJpegChunkOrder.length ; i < n ; i++) {
             var marker = stdJpegChunkOrder[i];
             if (marker in imageDataChunkTable) {
