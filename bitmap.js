@@ -1,7 +1,7 @@
 var SWFJpeg = function() {
     var SOI  = 0xFFD8;
     var SOF0 = 0xFFC0;
-    var DQT  = 0xFFFE;
+    var DQT  = 0xFFDB;
     var DHT  = 0xFFC4;
     var SOS  = 0xFFDA;
     var EOI  = 0xFFD9;
