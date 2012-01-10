@@ -191,6 +191,9 @@ var Bitstream = function() {
         return ((data.charCodeAt(0) & 0xff) << 8) + (data.charCodeAt(1) & 0xff);
     }
 
+    this.fromUI16BE = function(value) {
+        return String.fromCharCode(value >> 8) + String.fromCharCode(value & 0xff);
+    }
     /*
      * set function
      */
