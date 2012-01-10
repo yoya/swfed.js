@@ -93,6 +93,7 @@
               tag_text = tag.data.BackgroundColor;
               break;
             case 21: // DefineBitsJPEG2
+            case 35: // DefineBitsJPEG3
               var swfjpeg = new SWFJpeg();
               var jpegData = swfjpeg.outputStdJpeg(tag.data.ImageData);
               tag_html = "CharacterID:"+tag.data.CharacterID+"<br /> <img src=\"data:image/jpeg;base64,"+btoa(jpegData)+"\" />";
