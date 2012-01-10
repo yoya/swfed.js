@@ -90,8 +90,8 @@ var Bitstream = function() {
     }
     this.getUI16BE = function() {
 	this.byteAlign();
-	return (this.data.charCodeAt(this.byte_offset++) & 0xff << 8 |
-		(this.data.charCodeAt(this.byte_offset++) & 0xff));
+	return (((this.data.charCodeAt(this.byte_offset++) & 0xff) << 8) |
+                (this.data.charCodeAt(this.byte_offset++) & 0xff));
     }
 
     this.getUIBit = function() {
@@ -181,6 +181,14 @@ var Bitstream = function() {
             value = (-value  - 1) ^ bitmask;
 	}
 	this.putUIBits(value, n);
+    }
+
+    /*
+     * convert
+     */
+
+    this.toUI16BE = function(data) {
+        return ((data.charCodeAt(0) & 0xff) << 8) + (data.charCodeAt(1) & 0xff);
     }
 
     /*
