@@ -23,8 +23,8 @@ var SWFParser = function(editor) {
             if (isCompleted) {
                 var header_data = data.substr(0, 8);
                 var zlib_data = data.substr(10); // Zlib header skip (n=2)
-                data2 = zip_inflate(zlib_data);
-                bs.input(header_data + data2);
+                var movie_data = zip_inflate(zlib_data);
+                bs.input(header_data + movie_data);
             } else {
                 return ; // skip
             }            
