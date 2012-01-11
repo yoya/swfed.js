@@ -7,10 +7,10 @@ var SWFLoader = function(){
                 if (req.readyState > 1) {
                     if (req.status == 200) {
                         if (req.readyState < 4) {
-                            parser.input(req.responseText); // read partial
+                            parser.input(req.responseText, false); // read partial
                             parser.progress(false);
                         } else {
-                            parser.input(req.responseText); // read completed
+                            parser.input(req.responseText, true); // read completed
                             parser.progress(true); // finish
                         }
                     } else {

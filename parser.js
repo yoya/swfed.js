@@ -4,7 +4,10 @@ var SWFParser = function(editor) {
     this.swfmovieheader = null;
     this.swftags = [];
     this.input = function(data, isCompleted) {
-	if (data.length < 8) {
+        if (typeof isCompleted === 'undefined') {
+            isCompleted = true;
+        }
+	if (data.length < 16) {
 	    return ; // skip
 	}
 	if (this.bs === null) {
@@ -12,14 +15,29 @@ var SWFParser = function(editor) {
 	}
 	var bs = this.bs;
 	bs.input(data);
-	if (bs.byte_offset < 16) {
+        if (this.swfheader === null) {
 	    this.parseHeader(bs);
-	    this.parseMovieHeader(bs);
 	    editor.swfheader = this.swfheader;
-	    editor.swfmovieheader = this.swfmovieheader;
-	}
-	this.parseTags(bs);
-	editor.swftags = this.swftags;
+        }
+        console.debug(this.swfheader.Signature);
+        if (this.swfheader.Signature === "CWS") {
+        console.debug(isCompleted);
+            if (isCompleted) {
+                var header_data = data.substr(0, 8);
+                var zlib_data = data.substr(10); // Zlib header skip (n=2)
+                data2 = zip_inflate(zlib_data);
+                bs.input(header_data + data2);
+            } else {
+                return ; // skip
+            }            
+        }
+        console.debug("--====--");
+        if (this.swfmovieheader === null) {
+            this.parseMovieHeader(bs);
+            editor.swfmovieheader = this.swfmovieheader;
+	} 
+        this.parseTags(bs);
+        editor.swftags = this.swftags;
     }
     this.progress = function(completed) {
 	if (completed) {
