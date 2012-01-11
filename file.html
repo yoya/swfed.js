@@ -67,6 +67,7 @@
       }
       // swftags
       dump_swftags.innerHTML = "<table> </table>";
+      var jpegTables = null;
       for (var i = 0, n = swfed.swftags.length ; i < n ; i++) {
           var tag = swfed.swftags[i];
           var tag_code = tag.tag_code;
@@ -79,7 +80,6 @@
           dump_cell = dump_row.insertCell(2);
           var tag_text = tag.data;
           var tag_html = null;
-          var jpegTables = null;
           switch (tag_code) {
             case 6:// DefineBits (JPEG)
               var swfjpeg = new SWFJpeg();
