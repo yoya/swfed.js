@@ -98,6 +98,6 @@ var SWFLossless = function() {
         } else { // 32bit or 24bit color
             ;
         }
-        retuen pngdata.join("");
+        return pngdata.join("");
     }
 }
