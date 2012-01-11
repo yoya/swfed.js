@@ -73,15 +73,12 @@ var SWFJpeg = function() {
 
 
 var SWFLossless = function() {
-    this.width = null;
-    this.height = null;
-    this.format = null;
-    this.palette = null;
-    this.imagedata = null;
-    this.setLosslessData = function() {
-        ;
-    }
-    this.outputPNG = function() {
+    this.losslessToPNG = function() {
+        var width = null;
+        var height = null;
+        var format = null;
+        var palette = null;
+        var imagedata = null;
         ;
     }
 }
