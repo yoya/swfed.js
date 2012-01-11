@@ -841,13 +841,13 @@ function zip_inflate(str) {
     zip_inflate_pos = 0;
 
     buff = new Array(1024);
-    out = "";
+    out = []; // modify type from string to array
     while((i = zip_inflate_internal(buff, 0, buff.length)) > 0) {
 	for(j = 0; j < i; j++)
-	    out += String.fromCharCode(buff[j]);
+	    out.push(String.fromCharCode(buff[j]));
     }
     zip_inflate_data = null; // G.C.
-    return out;
+    return out.join('');
 }
 /* Copyright (C) 1999 Masanao Izumo <iz@onicos.co.jp>
  * Version: 1.0.1
@@ -2495,11 +2495,11 @@ function zip_deflate(str, level) {
     zip_deflate_start(level);
 
     buff = new Array(1024);
-    out = "";
+    out = []; // modify type from string to array
     while((i = zip_deflate_internal(buff, 0, buff.length)) > 0) {
 	for(j = 0; j < i; j++)
-	    out += String.fromCharCode(buff[j]);
+	    out.push(String.fromCharCode(buff[j]));
     }
     zip_deflate_data = null; // G.C.
-    return out;
+    return out.join('');
 }
