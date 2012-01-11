@@ -73,12 +73,31 @@ var SWFJpeg = function() {
 
 
 var SWFLossless = function() {
-    this.losslessToPNG = function() {
-        var width = null;
-        var height = null;
-        var format = null;
-        var palette = null;
-        var imagedata = null;
-        ;
+    var COLOR_TYPE_RGB = 2;
+    var COLOR_TYPE_PALETTE = 3;
+    var COLOR_TYPE_RGB_ALPHA =  6;
+    this.losslessToPNG = function(tag_code, format, width, height, colortablesize, zlibbitmap) {
+        bs = new Bitstream();
+        var pngdata = ["\x89PNG\r\n\x1A\n"]; // header
+        if (format === 3) { // palette
+            colorType = COLOR_TYPE_PALETTE;
+        } else if (tag_code === 20) { // 15bit or 24bit color
+            colorType = COLOR_TYPE_RGB;
+        } else { // 32bit or 24bit color
+            colorType = COLOR_TYPE_RGB_ALPHA;
+        }
+        pngdata.push("IHDR", bs.fromUI32(width), bs.fromUI32(height), "\8", String.fromCharCode(colorType), "\0\0\0");
+        if (format === 3) { // palette format
+            if (tag_code === 20) {// no transparent
+                ;
+            } else {
+                ;
+            }
+        } else if (format === 4) {// 15bit color 
+            console.error("DefineBitsLossless format 4 is not implemented yet.");
+        } else { // 32bit or 24bit color
+            ;
+        }
+        retuen pngdata.join("");
     }
 }
