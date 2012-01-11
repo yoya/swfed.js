@@ -19,9 +19,7 @@ var SWFParser = function(editor) {
 	    this.parseHeader(bs);
 	    editor.swfheader = this.swfheader;
         }
-        console.debug(this.swfheader.Signature);
         if (this.swfheader.Signature === "CWS") {
-        console.debug(isCompleted);
             if (isCompleted) {
                 var header_data = data.substr(0, 8);
                 var zlib_data = data.substr(10); // Zlib header skip (n=2)
@@ -31,7 +29,6 @@ var SWFParser = function(editor) {
                 return ; // skip
             }            
         }
-        console.debug("--====--");
         if (this.swfmovieheader === null) {
             this.parseMovieHeader(bs);
             editor.swfmovieheader = this.swfmovieheader;
