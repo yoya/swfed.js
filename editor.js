@@ -22,7 +22,7 @@ var SWFEditor = function() {
 	console.log(swfmovieheader);
 	for (var i = 0, n = swftags.length ; i < n ; i++) {
 	    swftag = swftags[i];
-	    console.log('code:'+swftag.code+' length:'+swftag.length);
+	    console.log('code:'+swftag.tag_code+' length:'+swftag.length);
 	    if (swftag.data) {
 		console.log(swftag.data);
 	    }
@@ -31,5 +31,12 @@ var SWFEditor = function() {
     this.output = function() {
         var builder = new SWFBuilder(this.swfheader, this.swfmovieheader, this.swftags);
         return builder.output();
+    }
+
+    this.getJpegData = function(cid) {
+        ;
+    }
+    this.getPNGData = function(cid) {
+        ;
     }
 }
