@@ -1,3 +1,32 @@
+var zlib_inflate = function(data, offset) {
+    if (typeof offset === 'undefined') {
+        offset = 0;
+    }
+    // zlib header skip
+    if ((data.charCodeAt(offset++) & 0x0f) !== 8) { // CMF
+        console.error("Compression method must be 8(deflate))");
+    }
+    if (data.charCodeAt(offset++) & 0x20) { // FLG
+        offset += 4; // DICTID
+    }
+    return zip_inflate(data, offset);
+}
+
+function zlib_deflate(str, offset, level) {
+    var data = [];
+    if(typeof offset == "undefined") {
+	offset = 0;
+    }
+    if(typeof level == "undefined") {
+	level = zip_DEFAULT_LEVEL;
+    }
+    var data = zlib_deflate(str, offset, level);
+    if (
+    var cmf = 0x78; // (CINFO=7 CM=8)
+    var flg = 0x9c; // (FLEVEL=2 FDICT=0 FCHECK=28)
+    return String.fromCharCode(cmf, flg) + zip_deflate(str, offset, level);
+}
+
 /*
   from: http://www.onicos.com/staff/iz/amuse/javascript/expert/
   - base64.js
@@ -832,13 +861,17 @@ function zip_inflate_internal(buff, off, size) {
     return n;
 }
 
-function zip_inflate(str) {
+function zip_inflate(str, offset) {
     var out, buff;
     var i, j;
 
     zip_inflate_start();
     zip_inflate_data = str;
-    zip_inflate_pos = 0;
+    if (typeof offset === 'undefined') {
+        zip_inflate_pos = 0;
+    } else {
+        zip_inflate_pos = offset;
+    }
 
     buff = new Array(1024);
     out = []; // modify type from string to array
@@ -2484,12 +2517,16 @@ function zip_qoutbuf() {
     }
 }
 
-function zip_deflate(str, level) {
+function zip_deflate(str, offset, level) {
     var out, buff;
     var i, j;
 
     zip_deflate_data = str;
-    zip_deflate_pos = 0;
+    if(typeof offset === "undefined") {
+        zip_deflate_pos = 0;
+    } else {
+        zip_deflate_pos = offset;
+    }
     if(typeof level == "undefined")
 	level = zip_DEFAULT_LEVEL;
     zip_deflate_start(level);
