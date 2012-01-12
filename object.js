@@ -978,7 +978,7 @@ var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
 	this.BitmapHeight = bs.getUI16LE();
         var zlibBitmapDataLen = length - 7;
         if (this.BitmapFormat === 3) {
-            this.BitmapColorTableSize = bs.getUI8();            
+            this.BitmapColorTableSize = bs.getUI8() + 1;
             zlibBitmapDataLen--;
         }
         this.ZlibBitmapData = bs.getData(zlibBitmapDataLen);
@@ -989,7 +989,7 @@ var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
 	bs.putUI16LE(this.BitmapWidth);
 	bs.putUI16LE(this.BitmapHeight);
         if (this.BitmapFormat === 3) {
-            bs.putUI8(this.BitmapColorTableSize);
+            bs.putUI8(this.BitmapColorTableSize - 1);
         }
         bs.putData(this.ZlibBitmapData);
     }
