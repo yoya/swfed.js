@@ -22,8 +22,7 @@ var SWFParser = function(editor) {
         if (this.swfheader.Signature === "CWS") {
             if (isCompleted) {
                 var header_data = data.substr(0, 8);
-                var zlib_data = data.substr(10); // Zlib header skip (n=2)
-                var movie_data = zip_inflate(zlib_data);
+                var movie_data = zlib_inflate(data, 8);
                 bs.input(header_data + movie_data);
             } else {
                 return ; // skip
