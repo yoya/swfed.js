@@ -20,8 +20,6 @@ function zlib_deflate(str, offset, level) {
     if(typeof level == "undefined") {
 	level = zip_DEFAULT_LEVEL;
     }
-    var data = zlib_deflate(str, offset, level);
-    if (
     var cmf = 0x78; // (CINFO=7 CM=8)
     var flg = 0x9c; // (FLEVEL=2 FDICT=0 FCHECK=28)
     return String.fromCharCode(cmf, flg) + zip_deflate(str, offset, level);
