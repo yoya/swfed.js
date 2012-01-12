@@ -98,6 +98,16 @@
               var jpegData = swfjpeg.outputStdJpeg(tag.data.ImageData);
               tag_html = "CharacterID:"+tag.data.CharacterID+"<br /> <img src=\"data:image/jpeg;base64,"+btoa(jpegData)+"\" />";
               break;
+            case 20: // DefineBitsLossless
+            case 36: // DefineBitsLossless2
+              var colorTableSize = null;
+              if (tag.data.BitmapFormat === 3) {
+                 colorTableSize = tag.data.BitmapColorTableSize;
+              }
+              var swflossless = new SWFLossless();
+              var pngData = swflossless.losslessToPNG(tag_code, tag.data.BitmapFormat, tag.data.BitmapWidth, tag.data.BitmapHeight, colorTableSize, tag.data.ZlibBitmapData);
+              tag_html = "CharacterID:"+tag.data.CharacterID+" BitmapFormat:"+tag.data.BitmapFormat+"<br /> <img src=\"data:image/png;base64,"+btoa(pngData)+"\" />";
+              break;
           }
           if (tag_html) {
               dump_cell.innerHTML = tag_html;

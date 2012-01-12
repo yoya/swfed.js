@@ -76,9 +76,9 @@ var SWFLossless = function() {
     var COLOR_TYPE_RGB = 2;
     var COLOR_TYPE_PALETTE = 3;
     var COLOR_TYPE_RGB_ALPHA =  6;
-    this.losslessToPNG = function(tag_code, format, width, height, colortablesize, zlibbitmap) {
+    this.losslessToPNG = function(tag_code, format, width, height, colorTableSize, zlibBitmap) {
         bs = new Bitstream();
-        var pngdata = ["\x89PNG\r\n\x1A\n"]; // header
+        var pngChunks = ["\x89PNG\r\n\x1A\n"]; // header
         if (format === 3) { // palette
             colorType = COLOR_TYPE_PALETTE;
         } else if (tag_code === 20) { // 15bit or 24bit color
@@ -86,18 +86,35 @@ var SWFLossless = function() {
         } else { // 32bit or 24bit color
             colorType = COLOR_TYPE_RGB_ALPHA;
         }
-        pngdata.push("IHDR", bs.fromUI32(width), bs.fromUI32(height), "\8", String.fromCharCode(colorType), "\0\0\0");
+        headerData = [bs.fromUI32BE(width), bs.fromUI32BE(height), "\8", String.fromCharCode(colorType), "\0\0\0"].join("");
+        pngChunks.push("IHDR", bs.fromUI32BE(headerData.length + 2), headerData);
+        var bitmapData = zlib_inflate(zlibBitmap);
         if (format === 3) { // palette format
             if (tag_code === 20) {// no transparent
-                ;
+                var colorTableRGB = bitmapData.substr(0, 3 * colorTableSize);
+                pngChunks.push("PLTE", bs.fromUI32BE(colorTableRGB.length + 2), colorTableRGB);
+                var idatData = [];
+                colormapPixelDataOffset = 3 * colorTableSize;
+                var padding_width = (width % 4)?(4 - (width % 4)):0;
+                for (var y = 0 ; y < height ; y++) {
+                    idatData.push("\0", bitmapData.substr(colormapPixelDataOffset, width));
+                    colormapPixelDataOffset += width + padding_width;
+                }
+                idatZlibData = zlib_deflate(idatData.join(""));
+                pngChunks.push("IDAT", bs.fromUI32BE(idatZlibData.length + 2),idatZlibData);
             } else {
-                ;
+                var paletteData = [];
+                var transData = [];
+                for (var i = 0, n = 4 * colorTableSize; i < n ; i+= 4) {
+                    paletteData.push(bitmapData.substr(i, 3));
+                    transData.push(bitmapData.substr(i+3, 1));
+                }
             }
         } else if (format === 4) {// 15bit color 
             console.error("DefineBitsLossless format 4 is not implemented yet.");
         } else { // 32bit or 24bit color
             ;
         }
-        return pngdata.join("");
+        return pngChunks.join("");
     }
 }
