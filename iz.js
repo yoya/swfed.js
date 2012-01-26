@@ -13,7 +13,6 @@ var zlib_inflate = function(data, offset) {
 }
 
 function zlib_deflate(str, offset, level) {
-    var data = [];
     if(typeof offset == "undefined") {
 	offset = 0;
     }
