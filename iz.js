@@ -1,3 +1,5 @@
+(function(){
+
 var zlib_inflate = function(data, offset) {
     if (typeof offset === 'undefined') {
         offset = 0;
@@ -2537,3 +2539,11 @@ function zip_deflate(str, offset, level) {
     zip_deflate_data = null; // G.C.
     return out.join('');
 }
+
+window.zlib_inflate = zlib_inflate;
+window.zlib_deflate = zlib_deflate;
+
+window.base64encode = base64encode;
+window.base64decode = base64decode;
+
+})();
