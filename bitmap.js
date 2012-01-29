@@ -86,7 +86,7 @@ var SWFLossless = function() {
         } else { // 32bit or 24bit color
             colorType = COLOR_TYPE_RGB_ALPHA;
         }
-        headerData = [bs.fromUI32BE(width), bs.fromUI32BE(height), "\8", String.fromCharCode(colorType), "\0\0\0"].join("");
+        headerData = [bs.fromUI32BE(width), bs.fromUI32BE(height), "\x08", String.fromCharCode(colorType), "\0\0\0"].join("");
         pngChunks.push("IHDR" + headerData);
         var bitmapData = zlib_inflate(zlibBitmap);
         if (format === 3) { // palette format
