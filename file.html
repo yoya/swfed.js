@@ -106,7 +106,7 @@
               }
               var swflossless = new SWFLossless();
               var pngData = swflossless.losslessToPNG(tag_code, tag.data.BitmapFormat, tag.data.BitmapWidth, tag.data.BitmapHeight, colorTableSize, tag.data.ZlibBitmapData);
-              tag_html = "CharacterID:"+tag.data.CharacterID+" BitmapFormat:"+tag.data.BitmapFormat+"<br /> <img src=\"data:image/png;base64,"+btoa(pngData)+"\" />";
+              tag_html = "CharacterID:"+tag.data.CharacterID+" BitmapFormat:"+tag.data.BitmapFormat+"<br /> <img src=\"data:image/png;base64,"+base64encode(pngData)+"\" />";
               break;
           }
           if (tag_html) {
