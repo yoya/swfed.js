@@ -80,19 +80,21 @@ var SWFLossless = function() {
         bs = new Bitstream();
         var pngChunks = [];
         if (format === 3) { // palette
-            colorType = COLOR_TYPE_PALETTE;
+            var colorType = COLOR_TYPE_PALETTE;
         } else if (tag_code === 20) { // 15bit or 24bit color
-            colorType = COLOR_TYPE_RGB;
+            var colorType = COLOR_TYPE_RGB;
         } else { // 32bit or 24bit color
-            colorType = COLOR_TYPE_RGB_ALPHA;
+            var colorType = COLOR_TYPE_RGB_ALPHA;
         }
-        headerData = [bs.fromUI32BE(width), bs.fromUI32BE(height), "\x08", String.fromCharCode(colorType), "\0\0\0"].join("");
+        var headerData = [bs.fromUI32BE(width), bs.fromUI32BE(height), "\x08", String.fromCharCode(colorType), "\0\0\0"].join("");
         pngChunks.push("IHDR" + headerData);
         var bitmapData = zlib_inflate(zlibBitmap);
+        var idatData = [];
         if (format === 3) { // palette format
             if (tag_code === 20) {// no transparent
                 var colorTableRGB = bitmapData.substr(0, 3 * colorTableSize);
                 pngChunks.push("PLTE" + colorTableRGB);
+                var colormapPixelDataOffset = 3 * colorTableSize;
             } else {
                 var paletteData = [];
                 var transData = [];
@@ -102,38 +104,31 @@ var SWFLossless = function() {
                 }
                 pngChunks.push("PLTE" + paletteData.join(''));
                 pngChunks.push("tRNS" + transData.join(''));
+                var colormapPixelDataOffset = 4 * colorTableSize;
             }
-            var idatData = [];
-            colormapPixelDataOffset = 3 * colorTableSize;
             var padding_width = (width % 4)?(4 - (width % 4)):0;
             for (var y = 0 ; y < height ; y++) {
                 idatData.push("\0", bitmapData.substr(colormapPixelDataOffset, width));
                 colormapPixelDataOffset += width + padding_width;
             }
-            idatZlibData = zlib_deflate(idatData.join(""));
-            pngChunks.push("IDAT" + idatZlibData);
         } else if (format === 4) {// 15bit color 
-            var idatData = [];
-            bitmapDataOffset = 1;
+            var bitmapDataOffset = 1;
             for (var y = 0 ; y < height ; y++) {
                 idatData.push("\0");
                 for (var x = 0 ; x < width ; x++) {
                     var rgb15 = bs.toUI16LE(bitmapData.substr(bitmapDataOffset, 2));
-                    var r5 = (rgb15 >> 10) & 0x1f; 
-                    var g5 = (rgb15 >>  5) & 0x1f; 
-                    var b5 =  rgb15        & 0x1f; 
-                    idatData.push(String.fromCharCode(r5 << 3),
-                                  String.fromCharCode(g5 << 3),
-                                  String.fromCharCode(b5 << 3));
+                    var r8 = (rgb15 >> 7) & 0xf8;
+                    var g8 = (rgb15 >> 2) & 0xf8;
+                    var b8 =  rgb15 << 3  & 0xf8;
+                    idatData.push(String.fromCharCode(r8),
+                                  String.fromCharCode(g8),
+                                  String.fromCharCode(b8));
                     bitmapDataOffset += 2;
                 }
             }
-            idatZlibData = zlib_deflate(idatData.join(""));
-            pngChunks.push("IDAT" + idatZlibData);
         } else { // 32bit or 24bit color
-            var idatData = [];
             if (tag_code === 20) {// no transparent
-                bitmapDataOffset = 1;
+                var bitmapDataOffset = 1;
                 for (var y = 0 ; y < height ; y++) {
                     idatData.push("\0");
                     for (var x = 0 ; x < width ; x++) {
@@ -142,7 +137,7 @@ var SWFLossless = function() {
                     }
                 }
             } else {
-                bitmapDataOffset = 0;
+                var bitmapDataOffset = 0;
                 for (var y = 0 ; y < height ; y++) {
                     idatData.push("\0");
                     for (var x = 0 ; x < width ; x++) {
@@ -152,9 +147,9 @@ var SWFLossless = function() {
                     }
                 }
             }
-            idatZlibData = zlib_deflate(idatData.join(""));
-            pngChunks.push("IDAT" + idatZlibData);
         }
+        var idatZlibData = zlib_deflate(idatData.join(""), 0, 0);
+        pngChunks.push("IDAT" + idatZlibData);
         var pngChunksWithCRC32 = ["\x89PNG\r\n\x1A\n"]; // header
         for (var i = 0, n = pngChunks.length ; i < n ; i++) {
             var chunk = pngChunks[i];
@@ -162,6 +157,7 @@ var SWFLossless = function() {
             pngChunksWithCRC32.push(chunk);
             pngChunksWithCRC32.push(bs.fromUI32BE(crc32(chunk)));
         }
+        delete colorType;
         return pngChunksWithCRC32.join("");
     }
 }
