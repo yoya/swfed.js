@@ -78,7 +78,7 @@ var SWFLossless = function() {
     var COLOR_TYPE_RGB_ALPHA =  6;
     this.losslessToPNG = function(tag_code, format, width, height, colorTableSize, zlibBitmap) {
         bs = new Bitstream();
-        var pngChunks = ["\x89PNG\r\n\x1A\n"]; // header
+        var pngChunks = [];
         if (format === 3) { // palette
             colorType = COLOR_TYPE_PALETTE;
         } else if (tag_code === 20) { // 15bit or 24bit color
@@ -87,12 +87,12 @@ var SWFLossless = function() {
             colorType = COLOR_TYPE_RGB_ALPHA;
         }
         headerData = [bs.fromUI32BE(width), bs.fromUI32BE(height), "\8", String.fromCharCode(colorType), "\0\0\0"].join("");
-        pngChunks.push("IHDR" + bs.fromUI32BE(headerData.length + 2) + headerData);
+        pngChunks.push("IHDR" + headerData);
         var bitmapData = zlib_inflate(zlibBitmap);
         if (format === 3) { // palette format
             if (tag_code === 20) {// no transparent
                 var colorTableRGB = bitmapData.substr(0, 3 * colorTableSize);
-                pngChunks.push("PLTE" + bs.fromUI32BE(colorTableRGB.length + 2) + colorTableRGB);
+                pngChunks.push("PLTE" + colorTableRGB);
                 var idatData = [];
                 colormapPixelDataOffset = 3 * colorTableSize;
                 var padding_width = (width % 4)?(4 - (width % 4)):0;
@@ -101,7 +101,7 @@ var SWFLossless = function() {
                     colormapPixelDataOffset += width + padding_width;
                 }
                 idatZlibData = zlib_deflate(idatData.join(""));
-                pngChunks.push("IDAT" + bs.fromUI32BE(idatZlibData.length + 2) + idatZlibData);
+                pngChunks.push("IDAT" + idatZlibData);
             } else {
                 var paletteData = [];
                 var transData = [];
@@ -115,9 +115,10 @@ var SWFLossless = function() {
         } else { // 32bit or 24bit color
             ;
         }
-        var pngChunksWithCRC32 = [];
+        var pngChunksWithCRC32 = ["\x89PNG\r\n\x1A\n"]; // header
         for (var i = 0, n = pngChunks.length ; i < n ; i++) {
             var chunk = pngChunks[i];
+            pngChunksWithCRC32.push(bs.fromUI32BE(chunk.length - 4));
             pngChunksWithCRC32.push(chunk);
             pngChunksWithCRC32.push(bs.fromUI32BE(crc32(chunk)));
         }
