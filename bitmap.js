@@ -93,27 +93,67 @@ var SWFLossless = function() {
             if (tag_code === 20) {// no transparent
                 var colorTableRGB = bitmapData.substr(0, 3 * colorTableSize);
                 pngChunks.push("PLTE" + colorTableRGB);
-                var idatData = [];
-                colormapPixelDataOffset = 3 * colorTableSize;
-                var padding_width = (width % 4)?(4 - (width % 4)):0;
-                for (var y = 0 ; y < height ; y++) {
-                    idatData.push("\0", bitmapData.substr(colormapPixelDataOffset, width));
-                    colormapPixelDataOffset += width + padding_width;
-                }
-                idatZlibData = zlib_deflate(idatData.join(""));
-                pngChunks.push("IDAT" + idatZlibData);
             } else {
                 var paletteData = [];
                 var transData = [];
-                for (var i = 0, n = 4 * colorTableSize; i < n ; i+= 4) {
+                for (var i = 0, n = 4 * colorTableSize; i < n ; i += 4) {
                     paletteData.push(bitmapData.substr(i, 3));
                     transData.push(bitmapData.substr(i+3, 1));
                 }
+                pngChunks.push("PLTE" + paletteData.join(''));
+                pngChunks.push("tRNS" + transData.join(''));
             }
+            var idatData = [];
+            colormapPixelDataOffset = 3 * colorTableSize;
+            var padding_width = (width % 4)?(4 - (width % 4)):0;
+            for (var y = 0 ; y < height ; y++) {
+                idatData.push("\0", bitmapData.substr(colormapPixelDataOffset, width));
+                colormapPixelDataOffset += width + padding_width;
+            }
+            idatZlibData = zlib_deflate(idatData.join(""));
+            pngChunks.push("IDAT" + idatZlibData);
         } else if (format === 4) {// 15bit color 
-            console.error("DefineBitsLossless format 4 is not implemented yet.");
+            var idatData = [];
+            bitmapDataOffset = 1;
+            for (var y = 0 ; y < height ; y++) {
+                idatData.push("\0");
+                for (var x = 0 ; x < width ; x++) {
+                    var rgb15 = bs.toUI16LE(bitmapData.substr(bitmapDataOffset, 2));
+                    var r5 = (rgb15 >> 10) & 0x1f; 
+                    var g5 = (rgb15 >>  5) & 0x1f; 
+                    var b5 =  rgb15        & 0x1f; 
+                    idatData.push(String.fromCharCode(r5 << 3),
+                                  String.fromCharCode(g5 << 3),
+                                  String.fromCharCode(b5 << 3));
+                    bitmapDataOffset += 2;
+                }
+            }
+            idatZlibData = zlib_deflate(idatData.join(""));
+            pngChunks.push("IDAT" + idatZlibData);
         } else { // 32bit or 24bit color
-            ;
+            var idatData = [];
+            if (tag_code === 20) {// no transparent
+                bitmapDataOffset = 1;
+                for (var y = 0 ; y < height ; y++) {
+                    idatData.push("\0");
+                    for (var x = 0 ; x < width ; x++) {
+                        idatData.push(bitmapData.substr(bitmapDataOffset, 3));                        
+                        bitmapDataOffset += 4;
+                    }
+                }
+            } else {
+                bitmapDataOffset = 0;
+                for (var y = 0 ; y < height ; y++) {
+                    idatData.push("\0");
+                    for (var x = 0 ; x < width ; x++) {
+                        idatData.push(bitmapData.substr(bitmapDataOffset+1, 3)); // RGB
+                        idatData.push(bitmapData.substr(bitmapDataOffset, 1)); // ALPHA
+                        bitmapDataOffset += 4;
+                    }
+                }
+            }
+            idatZlibData = zlib_deflate(idatData.join(""));
+            pngChunks.push("IDAT" + idatZlibData);
         }
         var pngChunksWithCRC32 = ["\x89PNG\r\n\x1A\n"]; // header
         for (var i = 0, n = pngChunks.length ; i < n ; i++) {
