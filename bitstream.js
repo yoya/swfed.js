@@ -187,6 +187,9 @@ var Bitstream = function() {
      * convert
      */
 
+    this.toUI16LE = function(data) {
+        return  (data.charCodeAt(0) & 0xff) + ((data.charCodeAt(1) & 0xff) << 8);
+    }
     this.toUI16BE = function(data) {
         return ((data.charCodeAt(0) & 0xff) << 8) + (data.charCodeAt(1) & 0xff);
     }
