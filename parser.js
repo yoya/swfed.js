@@ -16,7 +16,7 @@ var SWFParser = function(editor) {
 	var bs = this.bs;
 	bs.input(data);
         if (this.swfheader === null) {
-	    this.parseHeader(bs);
+	    this.swfheader = this.parseHeader(bs);
 	    editor.swfheader = this.swfheader;
         }
         if (this.swfheader.Signature === "CWS") {
@@ -29,10 +29,10 @@ var SWFParser = function(editor) {
             }            
         }
         if (this.swfmovieheader === null) {
-            this.parseMovieHeader(bs);
+            this.swfmovieheader = this.parseMovieHeader(bs);
             editor.swfmovieheader = this.swfmovieheader;
 	} 
-        this.parseTags(bs);
+        this.swftags = this.parseTags(bs);
         editor.swftags = this.swftags;
     }
     this.progress = function(completed) {
@@ -46,15 +46,15 @@ var SWFParser = function(editor) {
     }
     this.parseHeader = function(bs) {
 	//	console.debug('parseHeader');
-	this.swfheader = new SWFHeader(bs);
+	return new SWFHeader(bs);
     }
     this.parseMovieHeader = function(bs) {
 	//	console.debug('parseMovieHeader');
-	this.swfmovieheader = new SWFMovieHeader(bs);
+	return new SWFMovieHeader(bs);
     }
-    this.parseTags = function() {
+    this.parseTags = function(bs) {
 	//	console.debug('parseTags');
-	var bs = this.bs;
+        var swftags = [];
 	while (true) {
 	    bs.byteAlign();
 	    var tag_start_offset = bs.getOffset().byte_offset;
@@ -112,20 +112,27 @@ var SWFParser = function(editor) {
 	    case 9: // SetBackgroundColor
 		data = new SWFSetBackgroundColor(bs, tag_code);
 		break;
+	    case 12: // DoAction
+		data = new SWFDoAction(bs, tag_code, length);
+		break;
 	    case 20: // DefineBitsLossless
 	    case 36: // DefineBitsLossless2
 		data = new SWFDefineBitsLossless(bs, tag_code, length);
+		break;
+	    case 24: // Protect
+		data = new SWFProtect(bs, tag_code);
 		break;
 	    default:
 		data = new SWFUnknownTag(bs, tag_code, length);
 		break;
 	    }
 	    var tag = {tag_code:tag_code, length:length, data:data};
-	    this.swftags.push(tag);
+	    swftags.push(tag);
 	    bs.setOffset(tag_data_start_offset + length, 0);
 	    if (tag_code === 0) { // End
 		break;
 	    }
 	}
+        return swftags;
     }
 }

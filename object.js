@@ -959,7 +959,7 @@ var SWFJPEGTables = function(bs, tag_code, length) { // code:8
     }
 }
 
-var SWFSetBackgroundColor = function(bs, tag_code) { // 9
+var SWFSetBackgroundColor = function(bs, tag_code) { // code:9
     if (bs) {
         this.tag_code = tag_code;
 	this.BackgroundColor = new SWFRGB(bs);
@@ -968,6 +968,19 @@ var SWFSetBackgroundColor = function(bs, tag_code) { // 9
         this.BackgroundColor.build(bs);
     }
 }
+
+    var SWFDoAction = function(bs, tag_code, length) { // code:12
+    if (bs) {
+        this.tag_code = tag_code;
+        this.Actions = bs.getData(length - 1);
+        this.ActionEndFlag = bs.getUI8();
+    }
+    this.build = function(bs) {
+        bs.putData(this.Actions);
+        bs.putUI8(0);
+    }
+}
+
 
 var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
     if (bs) {
@@ -995,7 +1008,17 @@ var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
     }
 }
 
-var SWFUnknownTag = function(bs, tag_code, length) { // code:20,36
+var SWFProtect = function(bs, tag_code) { // code:24
+    if (bs) {
+        this.tag_code = tag_code;
+    }
+    this.build = function(bs) {
+        ;
+    }
+}
+
+
+var SWFUnknownTag = function(bs, tag_code, length) { // code:etc
     if (bs) {
         this.tag_code = tag_code;
 	this.data = bs.getData(length);
