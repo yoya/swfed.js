@@ -119,7 +119,7 @@ var SWFLossless = function() {
                     var rgb15 = bs.toUI16LE(bitmapData.substr(bitmapDataOffset, 2));
                     var r8 = (rgb15 >> 7) & 0xf8;
                     var g8 = (rgb15 >> 2) & 0xf8;
-                    var b8 =  rgb15 << 3  & 0xf8;
+                    var b8 = (rgb15 << 3) & 0xf8;
                     idatData.push(String.fromCharCode(r8),
                                   String.fromCharCode(g8),
                                   String.fromCharCode(b8));
