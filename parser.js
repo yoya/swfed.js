@@ -80,53 +80,55 @@ var SWFParser = function(editor) {
 		break;
 	    }
 	    var tag_data_start_offset = bs.byte_offset;
-	    var data = null;
+	    var tag = null;
 	    switch (tag_code) {
 	    case 0: // ShowFrame
-                data = new SWFEnd(bs, tag_code);
+                tag = new SWFEnd(bs, tag_code, length);
 		break;
 	    case 1: // ShowFrame
-                data = new SWFShowFrame(bs, tag_code);
+                tag = new SWFShowFrame(bs, tag_code, length);
 		break;
 	    case 2: // DefineShape
 	    case 22: // DefineShape2
 	    case 32: // DefineShape3
-		data = new SWFDefineShape(bs, tag_code);
+		tag = new SWFDefineShape(bs, tag_code, length);
 		break;
 	    case 4: // PlaceObject
 	    case 26: // PlaceObject2
-		data = new SWFPlaceObject(bs, tag_code, length);
+		tag = new SWFPlaceObject(bs, tag_code, length);
 		break;
 	    case 5: // RemoveObject
 	    case 28: // RemoveObject2
-		data = new SWFRemoveObject(bs, tag_code);
+		tag = new SWFRemoveObject(bs, tag_code, length);
 		break;
 	    case 6: // DefineBits
 	    case 21: // DefineBitsJPEG2
 	    case 35: // DefineBitsJPEG3
-		data = new SWFDefineBitsJPEG(bs, tag_code, length);
+		tag = new SWFDefineBitsJPEG(bs, tag_code, length);
 		break;
 	    case 8: // JPEGTables
-		data = new SWFJPEGTables(bs, tag_code, length);
+		tag = new SWFJPEGTables(bs, tag_code, length);
 		break;
 	    case 9: // SetBackgroundColor
-		data = new SWFSetBackgroundColor(bs, tag_code);
+		tag = new SWFSetBackgroundColor(bs, tag_code, length);
 		break;
 	    case 12: // DoAction
-		data = new SWFDoAction(bs, tag_code, length);
+		tag = new SWFDoAction(bs, tag_code, length);
 		break;
 	    case 20: // DefineBitsLossless
 	    case 36: // DefineBitsLossless2
-		data = new SWFDefineBitsLossless(bs, tag_code, length);
+		tag = new SWFDefineBitsLossless(bs, tag_code, length);
 		break;
 	    case 24: // Protect
-		data = new SWFProtect(bs, tag_code);
+		tag = new SWFProtect(bs, tag_code, length);
+		break;
+	    case 39: // DefineSprite
+		tag = new SWFDefineSprite(bs, tag_code, length);
 		break;
 	    default:
-		data = new SWFUnknownTag(bs, tag_code, length);
+		tag = new SWFUnknownTag(bs, tag_code, length);
 		break;
 	    }
-	    var tag = {tag_code:tag_code, length:length, data:data};
 	    swftags.push(tag);
 	    bs.setOffset(tag_data_start_offset + length, 0);
 	    if (tag_code === 0) { // End

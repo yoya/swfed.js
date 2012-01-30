@@ -220,6 +220,34 @@ var SWFARGB = function(bs) {
     }
 }
 
+var SWFFOCALGRADIENT = function(bs, tag_code) {
+    if (bs) {
+	bs.byteAlign();
+	this.SpreadMode = bs.getUIBits(2);
+	this.InterpolationMode = bs.getUIBits(2);
+	var numGradients = bs.getUIBits(4);
+	this.NumGradients = numGradients;
+	var gradientRecords = [];
+	for (i = 0 ; i < numGradients ; i++) {
+	    gradientRecords.push(new SWFGRADRECORD(bs, tag_code));
+	}
+	this.GradientRecords = gradientRecords;
+	this.FocalPoint = bs.getUI8();
+    }
+    this.build = function(bs) {
+        bs.byteAlign();
+	bs.putUIBits(this.SpreadMode, 2);
+	bs.putUIBits(this.InterpolationMode, 2);
+        var gradientRecords = this.GradientRecords;
+        var numGradients = gradientRecords.length;
+        bs.putUIBits(numGradients, 4);
+	for (i = 0 ; i < numGradients ; i++) {
+	    gradientRecords[i].build(bs);
+	}
+        bs.putUI8(this.FocalPoint);
+    }
+}
+
 var SWFGRADRECORD = function(bs, tag_code) {
     this.Ratio = bs.getUI8();
     if (tag_code < 32) { // DefineShape1or2
@@ -228,6 +256,7 @@ var SWFGRADRECORD = function(bs, tag_code) {
 	this.Color = new SWFRGBA(bs);
     }
     this.build = function(bs) {
+        bs.putUI8(this.Ratio);
         this.Color.build(bs);
     }
 }
@@ -241,13 +270,13 @@ var SWFGRADIENT = function(bs, tag_code) {
 	this.NumGradients = numGradients;
 	var gradientRecords = [];
 	for (i = 0 ; i < numGradients ; i++) {
-	    gradientRecords.push(new SWFGRADRECORD(bs));
+	    gradientRecords.push(new SWFGRADRECORD(bs, tag_code));
 	}
 	this.GradientRecords = gradientRecords;
     }
     this.build = function(bs) {
         bs.byteAlign();
-	bs.putUIBitst(his.SpreadMode, 2);
+	bs.putUIBits(this.SpreadMode, 2);
 	bs.putUIBits(this.InterpolationMode, 2);
         var gradientRecords = this.GradientRecords;
         var numGradients = gradientRecords.length;
@@ -272,11 +301,11 @@ var SWFFILLSTYLE = function(bs, tag_code) {
 	case 0x10: // linear gradient fill
 	case 0x12: // radial gradient fill
 	    this.GradientMatrix = new SWFMATRIX(bs);
-	    this.Gradient = new SWFGRADIENT(bs);
+	    this.Gradient = new SWFGRADIENT(bs, tag_code);
 	    break;
 	case 0x13: // focal radial gradient fill
 	    this.GradientMatrix = new SWFMATRIX(bs);
-	    // this.Gradient = new SWFFOCALGRADIENT(bs);
+	    this.Gradient = new SWFFOCALGRADIENT(bs, tag_code);
 	    break;
 	case 0x40: // repeating bitmap fill
 	case 0x41: // clipped bitmap fill
@@ -295,9 +324,6 @@ var SWFFILLSTYLE = function(bs, tag_code) {
 	    break;
 	case 0x10: // linear gradient fill
 	case 0x12: // radial gradient fill
-	    this.GradientMatrix.build(bs);
-	    this.Gradient.build(bs);
-	    break;
 	case 0x13: // focal radial gradient fill
 	    this.GradientMatrix.build(bs);
 	    this.Gradient.build(bs);
@@ -778,27 +804,30 @@ var SWFMovieHeader = function(bs) {
 
 /* Tag */
 
-var SWFEnd = function(bs, tag_code) { // code:0
+var SWFEnd = function(bs, tag_code, length) { // code:0
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
     }
     this.build = function(bs) {
         ;
     }
 }
 
-var SWFShowFrame = function(bs, tag_code) { // code:1
+var SWFShowFrame = function(bs, tag_code, length) { // code:1
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
     }
     this.build = function(bs) {
         ;
     }
 }
 
-var SWFDefineShape = function(bs, tag_code) { // 2
+var SWFDefineShape = function(bs, tag_code, length) { // 2
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.ShapeId = bs.getUI16LE();
 	this.ShapeBounds = new SWFRECT(bs);
 	this.Shapes = new SWFSHAPEWITHSTYLE(bs, tag_code);
@@ -814,6 +843,7 @@ var SWFDefineShape = function(bs, tag_code) { // 2
 var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
         if (tag_code === 4) { // PlaceObject
             var byteOffset = bs.byte_offset;
             this.CharacterId = bs.getUI16LE();
@@ -902,9 +932,10 @@ var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
     }
 }
 
-var SWFRemoveObject = function(bs, tag_code) { // 5, 28
+var SWFRemoveObject = function(bs, tag_code, length) { // 5, 28
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
         if (tag_code === 5) { // RemoveObject
             this.CharacterId = bs.getUI16LE();
             this.Depth = bs.getUI16LE();
@@ -925,6 +956,7 @@ var SWFRemoveObject = function(bs, tag_code) { // 5, 28
 var SWFDefineBitsJPEG = function(bs, tag_code, length) { // code:6, 21, 35
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.CharacterID = bs.getUI16LE();
         var imageDataLen = length - 2;
         if (tag_code === 35) { // DefineBitsJPEG3
@@ -951,6 +983,7 @@ var SWFDefineBitsJPEG = function(bs, tag_code, length) { // code:6, 21, 35
 var SWFJPEGTables = function(bs, tag_code, length) { // code:8
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
         var imageDataLen = length;
 	this.JPEGData = bs.getData(length);
     }
@@ -959,9 +992,10 @@ var SWFJPEGTables = function(bs, tag_code, length) { // code:8
     }
 }
 
-var SWFSetBackgroundColor = function(bs, tag_code) { // code:9
+var SWFSetBackgroundColor = function(bs, tag_code, length) { // code:9
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.BackgroundColor = new SWFRGB(bs);
     }
     this.build = function(bs) {
@@ -969,9 +1003,10 @@ var SWFSetBackgroundColor = function(bs, tag_code) { // code:9
     }
 }
 
-    var SWFDoAction = function(bs, tag_code, length) { // code:12
+var SWFDoAction = function(bs, tag_code, length) { // code:12
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
         this.Actions = bs.getData(length - 1);
         this.ActionEndFlag = bs.getUI8();
     }
@@ -985,6 +1020,7 @@ var SWFSetBackgroundColor = function(bs, tag_code) { // code:9
 var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.CharacterID = bs.getUI16LE();
 	this.BitmapFormat = bs.getUI8();
 	this.BitmapWidth = bs.getUI16LE();
@@ -1008,12 +1044,30 @@ var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
     }
 }
 
-var SWFProtect = function(bs, tag_code) { // code:24
+var SWFProtect = function(bs, tag_code, length) { // code:24
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
     }
     this.build = function(bs) {
         ;
+    }
+}
+
+var SWFDefineSprite = function(bs, tag_code, length) { // code:39
+    if (bs) {
+        var parser = new SWFParser(null);
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+	this.SpriteID = bs.getUI16LE();
+	this.FrameCount = bs.getUI16LE();
+        this.ControlTags = parser.parseTags(bs);
+    }
+    this.build = function(bs) {
+        var builder = new SWFBuilder(null);
+        bs.putUI16LE(this.SpriteID);
+        bs.putUI16LE(this.FrameCount);
+        builder.buildTags(bs, this.ControlTags);
     }
 }
 
@@ -1021,6 +1075,7 @@ var SWFProtect = function(bs, tag_code) { // code:24
 var SWFUnknownTag = function(bs, tag_code, length) { // code:etc
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.data = bs.getData(length);
     }
     this.build = function(bs) {

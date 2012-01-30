@@ -76,37 +76,37 @@
           var dump_cell = dump_row.insertCell();
           dump_cell.innerText = tag_name + "("+tag_code+")";
           dump_cell = dump_row.insertCell(1);
-          dump_cell.innerText = tag.length;
+          dump_cell.innerText = tag.tag_length;
           dump_cell = dump_row.insertCell(2);
-          var tag_text = tag.data;
+          var tag_text = tag;
           var tag_html = null;
           switch (tag_code) {
             case 6:// DefineBits (JPEG)
               var swfjpeg = new SWFJpeg();
-              var jpegData = swfjpeg.outputStdJpeg(tag.data.ImageData, jpegTables);
-              tag_html = "CharacterID:"+tag.data.CharacterID+"<br /> <img src=\"data:image/jpeg;base64,"+btoa(jpegData)+"\" />";
+              var jpegData = swfjpeg.outputStdJpeg(tag.ImageData, jpegTables);
+              tag_html = "CharacterID:"+tag.CharacterID+"<br /> <img src=\"data:image/jpeg;base64,"+btoa(jpegData)+"\" />";
               break;
             case 8:// JPEGTables;
-              jpegTables = tag.data.JPEGData;
+              jpegTables = tag.JPEGData;
               break;
             case 9:// SetBackgroundColor
-              tag_text = tag.data.BackgroundColor;
+              tag_text = tag.BackgroundColor;
               break;
             case 21: // DefineBitsJPEG2
             case 35: // DefineBitsJPEG3
               var swfjpeg = new SWFJpeg();
-              var jpegData = swfjpeg.outputStdJpeg(tag.data.ImageData);
-              tag_html = "CharacterID:"+tag.data.CharacterID+"<br /> <img src=\"data:image/jpeg;base64,"+btoa(jpegData)+"\" />";
+              var jpegData = swfjpeg.outputStdJpeg(tag.ImageData);
+              tag_html = "CharacterID:"+tag.CharacterID+"<br /> <img src=\"data:image/jpeg;base64,"+btoa(jpegData)+"\" />";
               break;
             case 20: // DefineBitsLossless
             case 36: // DefineBitsLossless2
               var colorTableSize = null;
-              if (tag.data.BitmapFormat === 3) {
-                 colorTableSize = tag.data.BitmapColorTableSize;
+              if (tag.BitmapFormat === 3) {
+                 colorTableSize = tag.BitmapColorTableSize;
               }
               var swflossless = new SWFLossless();
-              var pngData = swflossless.losslessToPNG(tag_code, tag.data.BitmapFormat, tag.data.BitmapWidth, tag.data.BitmapHeight, colorTableSize, tag.data.ZlibBitmapData);
-              tag_html = "CharacterID:"+tag.data.CharacterID+" BitmapFormat:"+tag.data.BitmapFormat+"<br /> <img src=\"data:image/png;base64,"+base64encode(pngData)+"\" />";
+              var pngData = swflossless.losslessToPNG(tag_code, tag.BitmapFormat, tag.BitmapWidth, tag.BitmapHeight, colorTableSize, tag.ZlibBitmapData);
+              tag_html = "CharacterID:"+tag.CharacterID+" BitmapFormat:"+tag.BitmapFormat+"<br /> <img src=\"data:image/png;base64,"+base64encode(pngData)+"\" />";
               break;
           }
           if (tag_html) {

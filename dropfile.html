@@ -11,8 +11,9 @@
  </head>
  <body>
   <canvas id="mycanvas" width="240" height="240"> canvas is here</canvas>
-  <script type="text/javascript">
+  <script type="text/javascript"">
    var swf_url = 'saitama.swf';
+//   var swf_url = 'ffxi2.swf';
    var canvas_id = 'mycanvas'
    var canvas = new SWFCanvas(canvas_id);
    var swfed = new SWFEditor();
@@ -23,13 +24,15 @@
       swfed.dump();
       for (var i = 0, n = swftags.length ; i < n ; i++) {
          var swftag = swftags[i];
-         switch (swftag.tag_code) {
+         switch (swftag.code) {
 	   case 9: // SetBackGroundColor
-	      canvas.setBackgroundColor(swftag.BackgroundColor);
+	      canvas.setBackgroundColor(swftag.data.BackgroundColor);
 	      break;
          }
       }
-//      swfed.save('/~yoya/upload.php', swfed.output());
+//      var swfed2 = new SWFEditor();
+//      swfed2.input(swfed.output());
+//      swfed2.dump();
    },
    function(i, n) { // progress
        var width = canvas.canvas.width;
