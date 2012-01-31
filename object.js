@@ -400,11 +400,11 @@ var SWFFILLSTYLEARRAY = function(bs, tag_code) {
     }
     this.build = function(bs, tag_code) {
         fillStyleCount = this.FillStyles.length;
-	if ((tag_code > 2) && (fillStyleCount >= 0xff)) {
+	if ((tag_code < 22) || (fillStyleCount < 0xff)) {
+            bs.putUI8(fillStyleCount);
+	} else {
             bs.putUI8(0xff);
 	    bs.putUI16LE(fillStyleCount);
-	} else {
-            bs.putUI8(fillStyleCount);
         }
 	for (var i = 0 ; i < fillStyleCount ; i++) {
 	    fillStyles[i].build(bs);
@@ -427,11 +427,11 @@ var SWFLINESTYLEARRAY = function(bs, tag_code) {
     }
     this.build = function(bs, tag_code) {
         lineStyleCount = this.LineStyles.length;
-	if ((tag_code > 2) && (lineStyleCount >= 0xff)) {
+	if ((tag_code < 22) || (lineStyleCount < 0xff)) {
+            bs.putUI8(lineStyleCount);
+	} else {
             bs.putUI8(0xff);
 	    bs.putUI16LE(lineStyleCount);
-	} else {
-            bs.putUI8(lineStyleCount);
         }
 	for (var i = 0 ; i < lineStyleCount ; i++) {
 	    lineStyles[i].build(bs);
@@ -628,7 +628,7 @@ var SWFSHAPERECORDS = function() { // SHAPEs
     this.buildRecords = function(shapeRecords, bs, tag_code, currentNumBits) {
 //var currentPosition = {x:0 y:0};
 	for (var i = 0, n = shapeRecords.length ; i < n ; i++){
-	    shapeRecords[i].build(bs, numBits);
+	    shapeRecords[i].build(bs, currentNumBits);
 	}
     }
 }
@@ -642,13 +642,11 @@ var SWFSHAPE = function(bs, tag_code) {
         var shapes = new SWFSHAPERECORDS();
         this.ShapeRecords = shapes.parseRecords(bs, tag_code, currentNumBits);
     }
-    this.build = function(bs, tag_code) {
-        this.NumFillBits = bs.need_bits_unsigned(this.FillStyles.FillStyles.length);
-        this.NumLineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length);
-	var numBits =  (this.NumFillBits << 4) | this.NumLineBits;
+    this.build = function(bs, tag_code, currentNumBits) {
+	var numBits =  (currentNumBits.FillBits << 4) | currentNumBits.LineBits;
         bs.putUI8(numBits);
-	var numBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
-        buildRecords(this.ShapeRecords, bs, tag_code, currentNumBits);
+        var shapes = new SWFSHAPERECORDS();
+        shapes.buildRecords(this.ShapeRecords, bs, tag_code, currentNumBits);
     }
     this.toString = function() {
 	return "{numFillBits:"+this.NumFillBits+" NumLineBits:"+this.NumLineBits+" ShapeRecords:"+this.ShapeRecords+"}";
@@ -674,7 +672,8 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code, currentNumBits) {
 	var numBits =  (this.NumFillBits << 4) | this.NumLineBits;
         bs.putUI8(numBits);
 	var numBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
-        buildRecords(this.ShapeRecords, bs, tag_code, currentNumBits);
+        var shapes = new SWFSHAPERECORDS();
+        shapes.buildRecords(this.ShapeRecords, bs, tag_code, currentNumBits);
     }
     this.toString = function() {
 	return "{FillStyles:"+this.FillStyles+" LineStyles:"+this.LineStyles+" numFillBits:"+this.NumFillBits+" NumLineBits:"+this.NumLineBits+" ShapeRecords:"+this.ShapeRecords+"}";
@@ -889,7 +888,7 @@ var SWFShowFrame = function(bs, tag_code, length) { // code:1
     }
 }
 
-var SWFDefineShape = function(bs, tag_code, length) { // 2
+var SWFDefineShape = function(bs, tag_code, length) { // 2,22,32
     if (bs) {
         this.tag_code = tag_code;
         this.tag_length =  length;
@@ -1153,8 +1152,9 @@ var SWFDefineFont = function(bs, tag_code, length) { // code:10,48
             for (i = 0 ; i < numGlyphs ; i++) {
                 bs.putUI16LE(this.OffsetTable[i]);
             }
+            var currentNumBits = {FillBits:0, LineBits:0};
             for (var i = 0 ; i < numGlyphs ; i++) {
-                this.GlyphShapeTable[i].build(bs, this.tag_code);
+                this.GlyphShapeTable[i].build(bs, this.tag_code, currentNumBits);
             }
         } else { // 48: DefineFont2
             bs.putUI8((this.FontFlagsHasLayout   << 7) |
@@ -1188,8 +1188,9 @@ var SWFDefineFont = function(bs, tag_code, length) { // code:10,48
                 var offsetOfCodeTableOffset = bs.getOffset();
                 bs.putUI16LE(0); // CodeTableOffset dummy
             }
+            var currentNumBits = {FillBits:0, LineBits:0};
             for (var i = 0 ; i < numGlyphs ; i++) {
-                this.GlyphShapeTable[i].build(bs, this.tag_code);
+                this.GlyphShapeTable[i].build(bs, this.tag_code, currentNumBits);
             }
         }
     }
@@ -1289,7 +1290,7 @@ var SWFDefineMorphShape = function(bs, tag_code, length) { // 46
 	this.StartEdges = new SWFSHAPE(bs, tag_code);
         var offsetOfEndEdges = bs.getOffset();
         if (offsetOfEndEdges.byte_offset != offsetOfOffset.byte_offset + this.Offset + 4) {
-            console.warn("offsetOfEndEdges.byte_offset("+offsetOfEndEdges.byte_offset+") != offsetOfOffset.byte_offset("+offsetOfOffset.byte_offset+") + this.Offset("+this.Offset+") + 4");
+            console.warn("DefineMorphShape CharacterId("+ this.CharacterId+"): offsetOfEndEdges.byte_offset("+offsetOfEndEdges.byte_offset+") != offsetOfOffset.byte_offset("+offsetOfOffset.byte_offset+") + this.Offset("+this.Offset+") + 4");
             bs.setOffset(offsetOfOffset.byte_offset + this.Offset + 4, 0);
         }
 	this.EndEdges = new SWFSHAPE(bs, tag_code);
@@ -1299,14 +1300,18 @@ var SWFDefineMorphShape = function(bs, tag_code, length) { // 46
 	this.StartBounds.build(bs);
 	this.EndBounds.build(bs);
         var offsetOfOffset = bs.getOffset();
-        bs.getUI32LE(0); // Offset dummy
+        bs.putUI32LE(0); // Offset dummy
         this.MorphFillStyles.build(bs, tag_code);
         this.MorphLineStyles.build(bs, tag_code);
-	this.StartEdges.build(bs, tag_code);
+        var currentNumBits = {};
+        currentNumBits.FillBits = bs.need_bits_unsigned(this.MorphFillStyles.FillStyles.length);
+        currentNumBits.LineBits = bs.need_bits_unsigned(this.MorphLineStyles.LineStyles.length);
+	this.StartEdges.build(bs, tag_code, currentNumBits);
         var offsetOfEndEges = bs.getOffset();
         this.Offset = offsetOfEndEges.byte_offset - offsetOfOffset.byte_offset - 4;
         bs.setOffset(this.Offset);
-	this.EndEdges.build(bs, tag_code);
+        var currentNumBits = {FillBits:0, LineBits:0};
+	this.EndEdges.build(bs, tag_code, currentNumBits);
     }
 }
 
