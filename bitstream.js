@@ -7,19 +7,20 @@ var Bitstream = function() {
 	this.data = data;
     }
     this.output = function() {
+        this.byteAlign(); // XXX
         var data = this.data;
-        var ret_data_len = (this.bit_offset)?this.byte_offset+1:this.byte_offset;
-        if (ret_data_len < data.length) {
-            return data.substr(0, ret_data_len);
-        } else if (ret_data_len > data.length) {
-            ; // XXX
+        var data_len = data.length;
+        if (this.byte_offset === data.length) {
+            return data;
         }
-        if (this.bit_offset) {
-            return data + String.fromCharCode(this.work_bits);
+        if (this.byte_offset < data.length) {
+            console.warn("this.byte_offset"+this.byte_offset+" < data.length("+data.length+")");
+            return data.substr(0, this.byte_offset)
         }
+        console.error("this.byte_offset"+this.byte_offset+" > data.length("+data.length+")");
         return data;
     }
-    this.byteAlign = function(n) {
+    this.byteAlign = function() {
 	if (this.bit_offset) {
 	    this.byte_offset += ((this.bit_offset+7)/8) | 0;
 	    this.bit_offset = 0;
@@ -194,8 +195,14 @@ var Bitstream = function() {
         return ((data.charCodeAt(0) & 0xff) << 8) + (data.charCodeAt(1) & 0xff);
     }
 
+    this.fromUI16LE = function(value) {
+        return String.fromCharCode(value & 0xff) + String.fromCharCode(value >> 8);
+    }
     this.fromUI16BE = function(value) {
         return String.fromCharCode(value >> 8) + String.fromCharCode(value & 0xff);
+    }
+    this.fromUI32LE = function(value) {
+        return String.fromCharCode(value & 0xff) + String.fromCharCode((value >> 8) & 0xff) + String.fromCharCode((value >> 16) & 0xff) + String.fromCharCode(value >> 24);
     }
     this.fromUI32BE = function(value) {
         return String.fromCharCode(value >> 24) + String.fromCharCode((value >> 16) & 0xff) + String.fromCharCode((value >> 8) & 0xff) + String.fromCharCode(value & 0xff);
@@ -205,14 +212,16 @@ var Bitstream = function() {
      * set function
      */
     this.setUI16LE = function(value, byte_offset) {
-        this.data[byte_offset++] = value & 0xff; value >>= 8;
-        this.data[byte_offset  ] = value;
+        var data_head = this.data.substr(0, byte_offset);
+        var data_tail = this.data.substr(byte_offset + 2);
+        this.data = data_head + this.fromUI16LE(value) + data_tail;
     }
     this.setUI32LE = function(value, byte_offset) {
-        this.data[byte_offset++] = value & 0xff; value >>= 8;
-        this.data[byte_offset++] = value & 0xff; value >>= 8;
-        this.data[byte_offset++] = value & 0xff; value >>= 8;
-        this.data[byte_offset  ] = value & 0xff;
+        console.debug("setUI32LE: value="+value+", byte_offset="+byte_offset);
+        var data_head = this.data.substr(0, byte_offset);
+        var data_tail = this.data.substr(byte_offset + 4);
+        console.debug("debug_length:"+this.fromUI32LE(value).length);
+        this.data = data_head + this.fromUI32LE(value) + data_tail;
     }
 
     /*
