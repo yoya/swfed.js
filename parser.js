@@ -128,6 +128,9 @@ var SWFParser = function(editor) {
 	    case 43: // FrameLabel
 		tag = new SWFFrameLabel(bs, tag_code, length);
 		break;
+	    case 46: // DefineMorphShape
+		tag = new SWFDefineMorphShape(bs, tag_code, length);
+		break;
 	    default:
 		tag = new SWFUnknownTag(bs, tag_code, length);
 		break;

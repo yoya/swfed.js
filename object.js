@@ -567,17 +567,12 @@ var SWFCURVEDEDGERECORD = function(bs, numBits) {
     }
 }
 
-var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
-    if (bs) {
-	this.FillStyles = new SWFFILLSTYLEARRAY(bs, tag_code);
-	this.LineStyles = new SWFLINESTYLEARRAY(bs, tag_code);
-	var numBits = bs.getUI8();
-	this.NumFillBits = numBits >> 4;
-	this.NumLineBits = numBits & 0x0f;
-	var currentNumBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
-	var done = false;
-	this.ShapeRecords = [];
-	while (done === false) {
+var SWFSHAPERECORDS = function() { // SHAPEs
+    this.parseRecords = function(bs, tag_code, currentNumBits) {
+        var shapeRecords = [];
+        var done = false;
+//var currentPosition = {x:0 y:0};
+        while (done === false) {
             var first6Bits = bs.getUIBits(6);
             if (first6Bits & 0x20) { // Edge
                 var numBits = first6Bits & 0x0f;
@@ -592,11 +587,53 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
             } else { // EndOfShape (000000)
                 var shape = new SWFENDSHAPERECORD(bs);
             }
-	    this.ShapeRecords.push(shape);
-	    if (shape instanceof SWFENDSHAPERECORD) {
-		done = true;
-	    }
+            shapeRecords.push(shape);
+            if (shape instanceof SWFENDSHAPERECORD) {
+                done = true;
+            }
+        }
+       return shapeRecords;
+    }
+    this.buildRecords = function(shapeRecords, bs, tag_code, currentNumBits) {
+//var currentPosition = {x:0 y:0};
+	for (var i = 0, n = shapeRecords.length ; i < n ; i++){
+	    shapeRecords[i].build(bs, numBits);
 	}
+    }
+}
+
+var SWFSHAPE = function(bs, tag_code) {
+    if (bs) {
+	var numBits = bs.getUI8();
+	this.NumFillBits = numBits >> 4;
+	this.NumLineBits = numBits & 0x0f;
+	var currentNumBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
+        var shapes = new SWFSHAPERECORDS();
+        this.ShapeRecords = shapes.parseRecords(bs, tag_code, currentNumBits);
+    }
+    this.build = function(bs, tag_code) {
+        this.NumFillBits = bs.need_bits_unsigned(this.FillStyles.FillStyles.length);
+        this.NumLineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length);
+	var numBits =  (this.NumFillBits << 4) | this.NumLineBits;
+        bs.putUI8(numBits);
+	var numBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
+        buildRecords(this.ShapeRecords, bs, tag_code, currentNumBits);
+    }
+    this.toString = function() {
+	return "{numFillBits:"+this.NumFillBits+" NumLineBits:"+this.NumLineBits+" ShapeRecords:"+this.ShapeRecords+"}";
+    }
+}
+
+var SWFSHAPEWITHSTYLE = function(bs, tag_code, currentNumBits) {
+    if (bs) {
+	this.FillStyles = new SWFFILLSTYLEARRAY(bs, tag_code);
+	this.LineStyles = new SWFLINESTYLEARRAY(bs, tag_code);
+	var numBits = bs.getUI8();
+	this.NumFillBits = numBits >> 4;
+	this.NumLineBits = numBits & 0x0f;
+	var currentNumBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
+        var shapes = new SWFSHAPERECORDS();
+        this.ShapeRecords = shapes.parseRecords(bs, tag_code, currentNumBits);
     }
     this.build = function(bs, tag_code) {
 	this.FillStyles.build(bs, tag_code);
@@ -606,10 +643,7 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
 	var numBits =  (this.NumFillBits << 4) | this.NumLineBits;
         bs.putUI8(numBits);
 	var numBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
-        var shapeRecords = this.ShapeRecords;
-	for (var i = 0, n = shapeRecords.length ; i < n ; i++){
-	    shapeRecords[i].build(bs, numBits);
-	}
+        buildRecords(this.ShapeRecords, bs, tag_code, currentNumBits);
     }
     this.toString = function() {
 	return "{FillStyles:"+this.FillStyles+" LineStyles:"+this.LineStyles+" numFillBits:"+this.NumFillBits+" NumLineBits:"+this.NumLineBits+" ShapeRecords:"+this.ShapeRecords+"}";
@@ -1080,6 +1114,198 @@ var SWFFrameLabel = function(bs, tag_code, length) { // code:43
     this.build = function(bs) {
         bs.putData(this.Name);
         bs.putUI8(0);
+    }
+}
+
+var SWFDefineMorphShape = function(bs, tag_code, length) { // 46
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+	this.CharacterId = bs.getUI16LE();
+	this.StartBounds = new SWFRECT(bs);
+	this.EndBounds = new SWFRECT(bs);
+        var offsetOfOffset = bs.getOffset();
+	this.Offset = bs.getUI32LE();
+        this.MorphFillStyles = new SWFMORPHFILLSTYLEARRAY(bs, tag_code);
+        this.MorphLineStyles = new SWFMORPHLINESTYLEARRAY(bs, tag_code);
+	this.StartEdges = new SWFSHAPE(bs, tag_code);
+        var offsetOfEndEdges = bs.getOffset();
+        if (offsetOfEndEdges.byte_offset != offsetOfOffset.byte_offset + this.Offset + 4) {
+            console.warn("offsetOfEndEdges.byte_offset("+offsetOfEndEdges.byte_offset+") != offsetOfOffset.byte_offset("+offsetOfOffset.byte_offset+") + this.Offset("+this.Offset+") + 4");
+            bs.setOffset(offsetOfOffset.byte_offset + this.Offset + 4, 0);
+        }
+	this.EndEdges = new SWFSHAPE(bs, tag_code);
+    }
+    this.build = function(bs) {
+	bs.putUI16LE(this.CharacterId);
+	this.StartBounds.build(bs);
+	this.EndBounds.build(bs);
+        var offsetOfOffset = bs.getOffset();
+        bs.getUI32LE(0); // dummy
+        this.MorphFillStyles.build(bs, tag_code);
+        this.MorphLineStyles.build(bs, tag_code);
+	this.StartEdges.build(bs, tag_code);
+        var offsetOfEndEges = bs.getOffset();
+        this.Offset = offsetOfEndEges.byte_offset - offsetOfOffset.byte_offset - 4;
+        bs.setOffset(this.Offset);
+	this.EndEdges.build(bs, tag_code);
+    }
+}
+
+var SWFMORPHFILLSTYLE = function(bs, tag_code) {
+    if (bs) {
+	this.FillStyleType =  bs.getUI8();
+	switch (this.FillStyleType) {
+	case 0x00: // solid fill
+            this.StartColor = new SWFRGBA(bs);
+            this.EndColor = new SWFRGBA(bs);
+	    break;
+	case 0x10: // linear gradient fill
+	case 0x12: // radial gradient fill
+	    this.StartGradientMatrix = new SWFMATRIX(bs);
+	    this.EndGradientMatrix = new SWFMATRIX(bs);
+	    this.Gradient = new SWFMORPHGRADIENT(bs, tag_code);
+	    break;
+	case 0x13: // focal radial gradient fill
+	    this.StartGradientMatrix = new SWFMATRIX(bs);
+	    this.EndGradientMatrix = new SWFMATRIX(bs);
+	    this.Gradient = new SWFFOCALGRADIENT(bs, tag_code);
+	    break;
+	case 0x40: // repeating bitmap fill
+	case 0x41: // clipped bitmap fill
+	case 0x42: // non-smoothed repeating bitmap
+	case 0x43: // non-smoothed clipped bitmap
+	    this.BitmapId = bs.getUI16LE();
+	    this.StartBitmapMatrix = new SWFMATRIX(bs);
+	    this.EndBitmapMatrix = new SWFMATRIX(bs);
+	    break;
+	}
+    }
+    this.build = function(bs) {
+	bs.putUI8(this.FillStyleType);
+	switch (this.FillStyleType) {
+	case 0x00: // solid fill
+            this.StartColor.build(bs);
+            this.EndColor.build(bs);
+	    break;
+	case 0x10: // linear gradient fill
+	case 0x12: // radial gradient fill
+	case 0x13: // focal radial gradient fill
+	    this.StartGradientMatrix.build(bs);
+	    this.EndGradientMatrix.build(bs);
+	    this.Gradient.build(bs);
+	    break;
+	case 0x40: // repeating bitmap fill
+	case 0x41: // clipped bitmap fill
+	case 0x42: // non-smoothed repeating bitmap
+	case 0x43: // non-smoothed clipped bitmap
+	    bs.putUI16LE(this.BitmapId);
+	    this.StartBitmapMatrix.build(bs);
+	    this.EndBitmapMatrix.build(bs);
+	    break;
+	}
+    }
+}
+
+var SWFMORPHGRADIENT = function(bs, tag_code) {
+    if (bs) {
+	var numGradients = bs.getUI8();
+	this.NumGradients = numGradients;
+	var gradientRecords = [];
+	for (i = 0 ; i < numGradients ; i++) {
+	    gradientRecords.push(new SWFMORPHGRADRECORD(bs, tag_code));
+	}
+	this.GradientRecords = gradientRecords;
+    }
+    this.build = function(bs) {
+        var gradientRecords = this.GradientRecords;
+        var numGradients = gradientRecords.length;
+        bs.putUI8(numGradients);
+	for (i = 0 ; i < numGradients ; i++) {
+	    gradientRecords[i].build(bs);
+	}
+    }
+}
+
+var SWFMORPHGRADRECORD = function(bs, tag_code) {
+    this.StartRatio = bs.getUI8();
+    this.StartColor = new SWFRGBA(bs);
+    this.EndRatio = bs.getUI8();
+    this.EndColor = new SWFRGBA(bs);
+    this.build = function(bs) {
+        bs.putUI8(this.StartRatio);
+        this.StartColor.build(bs);
+        bs.putUI8(this.EndRatio);
+        this.EndColor.build(bs);
+    }
+}
+
+var SWFMORPHLINESTYLE = function(bs, tag_code) {
+    if (bs) {
+        this.StartWidth = bs.getUI16LE();
+        this.EndWidth = bs.getUI16LE();
+        this.StartColor = new SWFRGBA(bs);
+        this.EndColor = new SWFRGBA(bs);
+    }
+    this.build = function(bs) {
+	bs.putUI16LE(this.StartWidth);
+	bs.putUI16LE(this.EndWidth);
+        this.StartColor.build(bs);
+        this.EndColor.build(bs);
+    }
+}
+
+var SWFMORPHFILLSTYLEARRAY = function(bs, tag_code) {
+    if (bs) {
+	var fillStyleCount = bs.getUI8();
+	if (fillStyleCount === 0xff) {
+	    fillStyleCount = bs.getUI16LE();
+	}
+	this.FillStyleCount = fillStyleCount;
+	var fillStyles = [];
+	for (var i = 0 ; i < fillStyleCount ; i++) {
+	    fillStyles.push(new SWFMORPHFILLSTYLE(bs, tag_code));
+	}
+	this.FillStyles = fillStyles;
+    }
+    this.build = function(bs, tag_code) {
+        fillStyleCount = this.FillStyles.length;
+	if (fillStyleCount < 0xff) {
+            bs.putUI8(fillStyleCount);
+	} else {
+            bs.putUI8(0xff);
+	    bs.putUI16LE(fillStyleCount);
+        }
+	for (var i = 0 ; i < fillStyleCount ; i++) {
+	    fillStyles[i].build(bs);
+	}
+    }
+}
+
+var SWFMORPHLINESTYLEARRAY = function(bs, tag_code) {
+    if (bs) {
+	var lineStyleCount = bs.getUI8();
+	if (lineStyleCount === 0xff) {
+	    lineStyleCount = bs.getUI16LE();
+	}
+	this.LineStyleCount = lineStyleCount;
+	var lineStyles = [];
+	for (var i = 0 ; i < lineStyleCount ; i++) {
+	    lineStyles.push(new SWFMORPHLINESTYLE(bs, tag_code));
+	}
+	this.LineStyles = lineStyles;
+    }
+    this.build = function(bs, tag_code) {
+        lineStyleCount = this.LineStyles.length;
+	if (lineStyleCount < 0xff) {
+            bs.putUI8(lineStyleCount);
+	} else {
+            bs.putUI8(0xff);
+	    bs.putUI16LE(lineStyleCount);
+        }
+	for (var i = 0 ; i < lineStyleCount ; i++) {
+	    lineStyles[i].build(bs);
+	}
     }
 }
 
