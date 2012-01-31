@@ -1071,6 +1071,17 @@ var SWFDefineSprite = function(bs, tag_code, length) { // code:39
     }
 }
 
+var SWFFrameLabel = function(bs, tag_code, length) { // code:43
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length = length;
+        this.Name = bs.getDataUntil("\0");
+    }
+    this.build = function(bs) {
+        bs.putData(this.Name);
+        bs.putUI8(0);
+    }
+}
 
 var SWFUnknownTag = function(bs, tag_code, length) { // code:etc
     if (bs) {

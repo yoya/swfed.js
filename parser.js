@@ -125,6 +125,9 @@ var SWFParser = function(editor) {
 	    case 39: // DefineSprite
 		tag = new SWFDefineSprite(bs, tag_code, length);
 		break;
+	    case 43: // FrameLabel
+		tag = new SWFFrameLabel(bs, tag_code, length);
+		break;
 	    default:
 		tag = new SWFUnknownTag(bs, tag_code, length);
 		break;
