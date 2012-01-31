@@ -480,7 +480,7 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
             currentNumBits.LineBits = this.NumLineBits = numBits & 0x0f;
         }
     }
-    this.build = function(bs, currentNumBits) {
+    this.build = function(bs, tag_code, currentNumBits) {
         bs.putUIBit(0); // TypeFlag:0
         bs.putUIBit(this.StateNewStyles)
         bs.putUIBit(this.StateLineStyle)
@@ -628,7 +628,7 @@ var SWFSHAPERECORDS = function() { // SHAPEs
     this.buildRecords = function(shapeRecords, bs, tag_code, currentNumBits) {
 //var currentPosition = {x:0 y:0};
 	for (var i = 0, n = shapeRecords.length ; i < n ; i++){
-	    shapeRecords[i].build(bs, currentNumBits);
+            shapeRecords[i].build(bs, tag_code, currentNumBits);
 	}
     }
 }
@@ -671,7 +671,7 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code, currentNumBits) {
         this.NumLineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length);
 	var numBits =  (this.NumFillBits << 4) | this.NumLineBits;
         bs.putUI8(numBits);
-	var numBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
+	var currentNumBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
         var shapes = new SWFSHAPERECORDS();
         shapes.buildRecords(this.ShapeRecords, bs, tag_code, currentNumBits);
     }
@@ -1300,6 +1300,8 @@ var SWFDefineMorphShape = function(bs, tag_code, length) { // 46
 	this.StartBounds.build(bs);
 	this.EndBounds.build(bs);
         var offsetOfOffset = bs.getOffset();
+        bs.byteAlign();
+        var offsetOfOffsetField = bs.getOffset();
         bs.putUI32LE(0); // Offset dummy
         this.MorphFillStyles.build(bs, tag_code);
         this.MorphLineStyles.build(bs, tag_code);
@@ -1309,7 +1311,7 @@ var SWFDefineMorphShape = function(bs, tag_code, length) { // 46
 	this.StartEdges.build(bs, tag_code, currentNumBits);
         var offsetOfEndEges = bs.getOffset();
         this.Offset = offsetOfEndEges.byte_offset - offsetOfOffset.byte_offset - 4;
-        bs.setOffset(this.Offset);
+        bs.setUI32LE(this.Offset, offsetOfOffsetField.byte_offset);
         var currentNumBits = {FillBits:0, LineBits:0};
 	this.EndEdges.build(bs, tag_code, currentNumBits);
     }
