@@ -164,6 +164,37 @@ var SWFMATRIX = function(bs) {
     }
 }
 
+var SWFLANGCODE = function(bs) {
+    if (bs) {
+	this.LanguageCode = bs.getUI8();
+    }
+    this.build = function(bs) {
+	bs.putUI8(this.LanguageCode);
+    }
+    this.toString = function() {
+	var $codetext;
+        switch (this.LanguageCode) {
+        case 1:
+            $codetext = "Latin";
+            break;
+        case 2:
+            $codetext = "Japanese";
+            break;
+        case 3:
+            $codetext = "Korean";
+            break;
+        case 4:
+            $codetext = "Simplified Chinese";
+            break;
+        case 5:
+            $codetext = "Traditional Chinese";
+            break;
+        default:
+        }
+        return "{LanguageCode:"+this.LanguageCode+"("+$codetext+")";
+    }
+}
+
 var SWFRGB = function(bs) {
     if (bs) {
 	this.Red = bs.getUI8();
@@ -1037,6 +1068,133 @@ var SWFSetBackgroundColor = function(bs, tag_code, length) { // code:9
     }
 }
 
+var SWFDefineFont = function(bs, tag_code, length) { // code:10,48
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+	this.FontID = bs.getUI16LE();
+        if (tag_code == 10) { // DefineFont
+            var numGlyphs = bs.getUI16LE(); // ???
+            this.NumGlyphs = numGlyphs; // ???
+            var offsetTable = [];
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                offsetTable.push(bs.getUI16LE());
+            }
+            this.OffsetTable = offsetTable;
+            var glyphShapeTable = [];
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                glyphShapeTable.push(new SWFSHAPE(bs, tag_code));
+            }
+            this.GlyphShapeTable = glyphShapeTable;
+        } else { // 48: DefineFont2
+            var fontFlags = bs.getUI8();
+            this.FontFlagsHasLayout   = (fontFlags >>> 7) & 1;
+            this.FontFlagsShiftJIS    = (fontFlags >>> 6) & 1;
+            this.FontFlagsSmallText   = (fontFlags >>> 5) & 1;
+            this.FontFlagsANSI        = (fontFlags >>> 4) & 1;
+            this.FontFlagsWideOffsets = (fontFlags >>> 3) & 1;
+            this.FontFlagsWideCodes   = (fontFlags >>> 2) & 1;
+            this.FontFlagsItalic      = (fontFlags >>> 1) & 1;
+            this.FontFlagsBold        = (fontFlags      ) & 1;
+            this.LanguageCode = new SWFLANGCODE(bs, tag_code);
+            this.FontNameLen = bs.getUI8();
+            if (this.FontNameLen) {
+                this.FontName = bs.getData(this.FontNameLen);
+            }
+            var numGlyphs = bs.getUI16LE();
+            this.NumGlyphs = numGlyphs;
+            var offsetTable = [];
+            if (this.FontFlagsWideOffsets) {
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    offsetTable.push(bs.getUI32LE());
+                }
+                this.OffsetTable = offsetTable;
+                this.CodeTableOffset = bs.getUI32LE();
+            } else {
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    offsetTable.push(bs.getUI16LE());
+                }
+                this.OffsetTable = offsetTable;
+                this.CodeTableOffset = bs.getUI16LE();
+            }
+            var glyphShapeTable = [];
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                glyphShapeTable.push(new SWFSHAPE(bs, tag_code));
+            }
+            this.GlyphShapeTable = glyphShapeTable;
+            var codeTable = [];
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                codeTable.push(bs.getUI16LE());
+            }
+            this.CodeTable = codeTable;
+            if (this.FontFlagsHasLayout) {
+                this.FontAscent = bs.getUI16LE();
+                this.FontDescent = bs.getUI16LE();
+                this.FontLeading = bs.getUI16LE();
+                var fontAdvanceTable = [];
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    fontAdvanceTable.push(bs.getUI16LE());
+                }
+                this.FontAdvanceTable = fontAdvanceTable;
+                var fontBoundsTable = [];
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    fontBoundsTable.push(new SWFRECT(bs));
+                }
+                this.FontBoundsTable = fontBoundsTable;
+            }
+        }
+    }
+    this.build = function(bs) {
+	bs.putUI16LE(this.FontID);
+        if (this.tag_code == 10) { // DefineFont
+            var numGlyphs = offsetTable.length;
+            bs.putUI16LE(numGlyphs); // ???
+            this.NumGlyphs = numGlyphs;
+            for (i = 0 ; i < numGlyphs ; i++) {
+                bs.putUI16LE(this.OffsetTable[i]);
+            }
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                this.GlyphShapeTable[i].build(bs, this.tag_code);
+            }
+        } else { // 48: DefineFont2
+            bs.putUI8((this.FontFlagsHasLayout   << 7) |
+                      (this.FontFlagsShiftJIS    << 6) |
+                      (this.FontFlagsSmallText   << 5) |
+                      (this.FontFlagsANSI        << 4) |
+                      (this.FontFlagsWideOffsets << 3) |
+                      (this.FontFlagsWideCodes   << 2) |
+                      (this.FontFlagsItalic      << 1) |
+                      this.FontFlagsBold);
+            this.LanguageCode.build(bs);
+            this.FontNameLen = this.FontName.length;
+            bs.putUI8(this.FontNameLen);
+            if (this.FontNameLen) {
+                bs.putData(this.FontName);
+            }
+            numGlyphs = this.OffsetTable.length;
+            this.NumGlyphs = numGlyphs;
+            bs.putUI16LE(numGlyphs);
+            var offsetOfOffsetTable = bs.getOffset();
+            if (this.FontFlagsWideOffsets) {
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    bs.putUI32LE(this.OffsetTable);
+                }
+                var offsetOfCodeTableOffset = bs.getOffset();
+                bs.putUI32LE(0); // CodeTableOffset dummy
+            } else {
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    bs.putUI16LE(this.OffsetTable);
+                }
+                var offsetOfCodeTableOffset = bs.getOffset();
+                bs.putUI16LE(0); // CodeTableOffset dummy
+            }
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                this.GlyphShapeTable[i].build(bs, this.tag_code);
+            }
+        }
+    }
+}
+
 var SWFDoAction = function(bs, tag_code, length) { // code:12
     if (bs) {
         this.tag_code = tag_code;
@@ -1141,7 +1299,7 @@ var SWFDefineMorphShape = function(bs, tag_code, length) { // 46
 	this.StartBounds.build(bs);
 	this.EndBounds.build(bs);
         var offsetOfOffset = bs.getOffset();
-        bs.getUI32LE(0); // dummy
+        bs.getUI32LE(0); // Offset dummy
         this.MorphFillStyles.build(bs, tag_code);
         this.MorphLineStyles.build(bs, tag_code);
 	this.StartEdges.build(bs, tag_code);

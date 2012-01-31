@@ -112,6 +112,10 @@ var SWFParser = function(editor) {
 	    case 9: // SetBackgroundColor
 		tag = new SWFSetBackgroundColor(bs, tag_code, length);
 		break;
+	    case 10: // DefineFont
+	    case 48: // DefineFont2
+		tag = new SWFDefineFont(bs, tag_code, length);
+		break;
 	    case 12: // DoAction
 		tag = new SWFDoAction(bs, tag_code, length);
 		break;
