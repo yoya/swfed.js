@@ -1102,6 +1102,9 @@ var SWFDefineFont = function(bs, tag_code, length) { // code:10,48
             }
             var numGlyphs = bs.getUI16LE();
             this.NumGlyphs = numGlyphs;
+            if (numGlyphs === 0) {
+                return ; // no glyphs field.
+            }
             var offsetTable = [];
             if (this.FontFlagsWideOffsets) {
                 for (var i = 0 ; i < numGlyphs ; i++) {
@@ -1174,6 +1177,9 @@ var SWFDefineFont = function(bs, tag_code, length) { // code:10,48
             numGlyphs = this.OffsetTable.length;
             this.NumGlyphs = numGlyphs;
             bs.putUI16LE(numGlyphs);
+            if (numGlyphs === 0) {
+                return ; // no glyphs field.
+            }
             var offsetOfOffsetTable = bs.getOffset();
             if (this.FontFlagsWideOffsets) {
                 for (var i = 0 ; i < numGlyphs ; i++) {
