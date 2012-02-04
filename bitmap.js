@@ -113,6 +113,7 @@ var SWFLossless = function() {
             }
         } else if (format === 4) {// 15bit color 
             var bitmapDataOffset = 1;
+            var padding_width = (width % 2)?2:0;
             for (var y = 0 ; y < height ; y++) {
                 idatData.push("\0");
                 for (var x = 0 ; x < width ; x++) {
@@ -125,6 +126,7 @@ var SWFLossless = function() {
                                   String.fromCharCode(b8));
                     bitmapDataOffset += 2;
                 }
+                bitmapDataOffset += padding_width;
             }
         } else { // 32bit or 24bit color
             if (tag_code === 20) {// no transparent
