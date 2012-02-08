@@ -1,3 +1,7 @@
+/*
+ * 2012/01/03- (c) yoya@awm.jp
+ */
+
 // var SWFScheduler = function(url) { ; }
 
 var SWFEditor = function() {

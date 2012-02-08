@@ -1,3 +1,7 @@
+/*
+ * 2012/02/02- (c) yoya@awm.jp
+ */
+
 var SWFScheduler = function(elapse) { // [msec]
     this.elapse = elapse;
     this.taskList = [];

@@ -1,3 +1,7 @@
+/*
+ * 2012/01/03- (c) yoya@awm.jp
+ */
+
 var SWFBuilder = function(swfheader, swfmovieheader, swftags) {
     this.swfheader = swfheader;
     this.swfmovieheader = swfmovieheader;

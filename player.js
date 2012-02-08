@@ -1,3 +1,7 @@
+/*
+ * 2012/02/02- (c) yoya@awm.jp
+ */
+
 var SWFPlayer = function(canvas, swfed) {
     var currentFrames = 0;
     var currentTagNum = 0;

@@ -1,3 +1,7 @@
+/*
+ * 2012/01/03- (c) yoya@awm.jp
+ */
+
 var Bitstream = function() {
     this.data = '';
     this.byte_offset = 0;

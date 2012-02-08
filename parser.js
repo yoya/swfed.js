@@ -1,3 +1,7 @@
+/*
+ * 2012/01/03- (c) yoya@awm.jp
+ */
+
 var SWFParser = function(editor) {
     this.bs = null;
     this.swfheader = null;

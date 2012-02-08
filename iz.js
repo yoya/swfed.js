@@ -1,3 +1,8 @@
+/*
+ * 2012/01/09- (c) yoya@awm.jp
+ * zlib wrapper and some customize. originated by Masanao Izumo.
+ */
+
 (function(){
 
 var zlib_inflate = function(data, offset) {

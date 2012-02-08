@@ -1,3 +1,7 @@
+/*
+ * 2012/01/10- (c) yoya@awm.jp
+ */
+
 var SWFJpeg = function() {
     var SOI  = 0xFFD8;
     var SOF0 = 0xFFC0;

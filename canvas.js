@@ -1,3 +1,7 @@
+/*
+ * 2012/01/03- (c) yoya@awm.jp
+ */
+
 var SWFCanvas = function (canvas_id) {
     var canvas = document.getElementById(canvas_id);
     this.width  = canvas.width;
