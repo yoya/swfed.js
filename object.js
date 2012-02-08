@@ -1180,16 +1180,17 @@ var SWFDefineFont = function(bs, tag_code, length) { // code:10,48
             if (numGlyphs === 0) {
                 return ; // no glyphs field.
             }
-            var offsetOfOffsetTable = bs.getOffset();
+            var offsetOfOffsetTable = [];
             if (this.FontFlagsWideOffsets) {
                 for (var i = 0 ; i < numGlyphs ; i++) {
-                    bs.putUI32LE(this.OffsetTable);
+                    offsetOfOffsetTable.push(bs.getOffset().byte_offset);
+                    bs.putUI32LE(0); // dummy
                 }
-                var offsetOfCodeTableOffset = bs.getOffset();
                 bs.putUI32LE(0); // CodeTableOffset dummy
             } else {
                 for (var i = 0 ; i < numGlyphs ; i++) {
-                    bs.putUI16LE(this.OffsetTable);
+                    offsetOfOffsetTable.push(bs.getOffset().byte_offset);
+                    bs.putUI16LE(0); // dummy
                 }
                 var offsetOfCodeTableOffset = bs.getOffset();
                 bs.putUI16LE(0); // CodeTableOffset dummy
