@@ -1,10 +1,15 @@
 var SWFCanvas = function (canvas_id) {
     var canvas = document.getElementById(canvas_id);
-    this.canvas = canvas;
+    this.width  = canvas.width;
+    this.height = canvas.height;
     var ctx = canvas.getContext('2d');
+    this.clear = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
     this.setBackgroundColor = function(rgb) {
-	console.debug('SWFCanvas::setBackgroundColor('+rgb+')');
-	canvas.style.backgroundColor = rgb.toStringCSS();
+        var cssText = rgb.toStringCSS();
+	console.debug('SWFCanvas::setBackgroundColor('+cssText+')');
+	canvas.style.backgroundColor = cssText;
     }
     // http://www.html5.jp/canvas/how5.html
     this.drawRadialGradient = function(x, y, w, colorStops) {
