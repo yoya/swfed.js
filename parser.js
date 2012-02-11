@@ -7,7 +7,10 @@ var SWFParser = function(editor) {
     this.swfheader = null;
     this.swfmovieheader = null;
     this.swftags = [];
-    this.framesLoaded = editor.framesLoaded = 0;
+    if (editor) {
+        editor.framesLoaded = 0;
+    }
+    this.framesLoaded = 0;
     this.input = function(data, isCompleted) {
         if (typeof isCompleted === 'undefined') {
             isCompleted = true;
@@ -93,7 +96,9 @@ var SWFParser = function(editor) {
 	    case 1: // ShowFrame
                 tag = new SWFShowFrame(bs, tag_code, length);
                 this.framesLoaded++;
-                editor.framesLoaded++;
+                if (editor) {
+                    editor.framesLoaded++;
+                }
 		break;
 	    case 2: // DefineShape
 	    case 22: // DefineShape2
