@@ -72,7 +72,7 @@ var Bitstream = function() {
 	ret = this.data.substr(bo, n);
 	this.byte_offset = bo + n;
 	if ((delim_offset !== -1) && (delim.length > 0)) {
-	    this.byte_offset = delim.length;
+	    this.byte_offset += delim.length;
 	}
 	return ret;
     }
