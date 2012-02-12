@@ -108,6 +108,16 @@
               var swflossless = new SWFLossless();
               var pngData = swflossless.losslessToPNG(tag_code, tag.BitmapFormat, tag.BitmapWidth, tag.BitmapHeight, colorTableSize, tag.ZlibBitmapData);
               tag_html = "CharacterID:"+tag.CharacterID+" BitmapFormat:"+tag.BitmapFormat+"<br /> <img src=\"data:image/png;base64,"+base64encode(pngData)+"\" />";
+            case 37: // DefineEditText
+              tag_text = "CharacterID:"+tag.CharacterID;
+              tag_text += " VariableName:"+tag.VariableName;
+              if (tag.InitialText) {
+                  tag_text += " InitialText:"+tag.InitialText;
+              }
+              break;
+            case 88: // DefineFontName
+              tag_text = "FontName:"+tag.FontName;
+              tag_text += " FontCopyright:"+tag.FontCopyright;
               break;
           }
           if (tag_html) {
