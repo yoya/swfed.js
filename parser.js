@@ -128,6 +128,9 @@ var SWFParser = function(editor) {
 	    case 48: // DefineFont2
 		tag = new SWFDefineFont(bs, tag_code, length);
 		break;
+	    case 88: // DefineFontName
+		tag = new SWFDefineFontName(bs, tag_code, length);
+		break;
 	    case 12: // DoAction
 		tag = new SWFDoAction(bs, tag_code, length);
 		break;

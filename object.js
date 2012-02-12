@@ -45,6 +45,7 @@ var SWFTagNames = {
     59:"DoInitAction",
     60:"DefineBideoStream",
     61:"VideoFrame",
+    88:"DefineFontName",
 };
 
 
@@ -1202,6 +1203,22 @@ var SWFDefineFont = function(bs, tag_code, length) { // code:10,48
                 this.GlyphShapeTable[i].build(bs, this.tag_code, currentNumBits);
             }
         }
+    }
+}
+
+
+var SWFDefineFontName = function(bs, tag_code, length) { // code:48
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+	this.FontID = bs.getUI16LE();
+        this.FontName = bs.getDataUntil("\0"); // STRING
+        this.FontCopyright = bs.getDataUntil("\0"); // STRING
+    }
+    this.build = function(bs) {
+	bs.putUI16LE(this.FontID);
+        bs.putData(this.FontName+"\0"); // STRING
+        bs.putData(this.FontCopyright+"\0"); // STRING
     }
 }
 
