@@ -138,6 +138,9 @@ var SWFParser = function(editor) {
 	    case 24: // Protect
 		tag = new SWFProtect(bs, tag_code, length);
 		break;
+            case 37: // DefineEditText
+		tag = new SWFDefineEditText(bs, tag_code, length);
+		break;
 	    case 39: // DefineSprite
 		tag = new SWFDefineSprite(bs, tag_code, length);
 		break;

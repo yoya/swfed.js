@@ -1256,6 +1256,108 @@ var SWFProtect = function(bs, tag_code, length) { // code:24
     }
 }
 
+var SWFDefineEditText = function(bs, tag_code, length) { // code:37
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+        this.CharacterID = bs.getUI16LE();
+        this.Bound = SWFRECT(bs);
+        var flag1 = bs.getUI8();
+        this.HasText      = (flag1 >>> 7) & 1;
+        this.WordWrap     = (flag1 >>> 6) & 1;
+        this.Multiline    = (flag1 >>> 5) & 1;
+        this.Password     = (flag1 >>> 4) & 1;
+        this.ReadOnly     = (flag1 >>> 3) & 1;
+        this.HasTextColor = (flag1 >>> 2) & 1;
+        this.HasMaxLength = (flag1 >>> 1) & 1;
+        this.HasFont      =  flag1        & 1;
+        var flag2 = bs.getUI8();
+        this.HasFontClass = (flag2 >>> 7) & 1;
+        this.AutoSize     = (flag2 >>> 6) & 1;
+        this.HasLayout    = (flag2 >>> 5) & 1;
+        this.NoSelect     = (flag2 >>> 4) & 1;
+        this.Border       = (flag2 >>> 3) & 1;
+        this.WasStatic    = (flag2 >>> 2) & 1;
+        this.HTML         = (flag2 >>> 1) & 1;
+        this.UseOutlines  =  flag2        & 1;
+        if (this.HasFont) {
+            this.FontID = bs.getUI16LE();
+            if (this.HasFontClass) { // can't be true if hasFont is true
+                this.FontClass = bs.getDataUntil("\0"); // STRING
+            }
+            this.FontHeight = bs.getUI16LE();
+        }
+        if (this.HasTextColor) {
+            this.TextColor = new SWFRGBA(bs);
+        }
+        if (this.HasMaxLength) {
+            this.MaxLength = bs.getUI16LE();
+        }
+        if (this.HasLayout) {
+            this.Align = bs.getUI8();
+            this.LeftMargin = bs.getUI16LE();
+            this.RightMargin = bs.getUI16LE();
+            this.Indent = bs.getUI16LE();
+            this.Leading = bs.getUI16LE();
+        }
+        this.VariableName = bs.getDataUntil("\0"); // STRING
+        if (this.HasText) {
+            this.InitialText = bs.getDataUntil("\0"); // STRING
+        }
+    }
+    this.build = function(bs) {
+        bs.putUI16LE(this.CharacterID);
+        this.Bound.build(bs);
+        // flag check
+        this.HasFont      = (this.FontID)?1:0;
+        this.HasFontClass = (this.FontClass)?1:0;
+        this.HasTextColor = (this.TextColor)?1:0;
+        this.HasMaxLength = (this.MaxLength)?1:0;
+        this.HasLayout    = (this.Align)?1:0;
+        this.HasText      = (this.InitialText)?1:0;
+        bs.putUI8(this.HasText      << 7 |
+                  this.WordWrap     << 6 |
+                  this.Multiline    << 3 |
+                  this.Password     << 4 |
+                  this.ReadOnly     << 3 |
+                  this.HasTextColor << 2 |
+                  this.HasMaxLength << 1 |
+                  this.HasFont);
+        bs.putUI8(this.HasFontClass << 7 |
+                  this.AutoSize     << 6 |
+                  this.HasLayout    << 5 |
+                  this.NoSelect     << 4 |
+                  this.Border       << 3 |
+                  this.WasStatic    << 2 |
+                  this.HTML         << 1 |
+                  this.UseOutlines);
+        if (this.HasFont) {
+            bs.putUI16LE(this.FontID);
+            if (this.HasFontClass) { // can't be true if hasFont is true
+                bs.putData(this.FontClass+"\0"); // STRING
+            }
+            bs.putUI16LE(this.FontHeight);
+        }
+        if (this.HasTextColor) {
+            this.TextColor.build(bs);
+        }
+        if (this.HasMaxLength) {
+            bs.putUI16LE(this.MaxLength);
+        }
+        if (this.HasLayout) {
+            bs.putUI8(this.Align);
+            bs.putUI16LE(this.LeftMargin);
+            bs.putUI16LE(this.RightMargin);
+            bs.putUI16LE(this.Indent);
+            bs.putUI16LE(this.Leading);
+        }
+        bs.putData(this.VariableName+"\0"); // STRING
+        if (this.HasText) {
+            bs.putDat(this.InitialText+"\0"); // STRING
+        }
+    }
+}
+
 var SWFDefineSprite = function(bs, tag_code, length) { // code:39
     if (bs) {
         var parser = new SWFParser(null);
