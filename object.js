@@ -451,7 +451,7 @@ var SWFENDSHAPERECORD = function(bs) {
     }
 }
 
-var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
+var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits, currentPosition) {
     if (bs) {
         this.StateNewStyles  = (changeFlag >> 4) & 1;
         this.StateLineStyle  = (changeFlag >> 3) & 1;
@@ -463,6 +463,8 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
             this.MoveBits = moveBits;
             this.MoveX = bs.getSIBits(moveBits); // MoveDeltaX
             this.MoveY = bs.getSIBits(moveBits); // MoveDeltaY
+            currentPosition.x = this.MoveX;
+            currentPosition.y = this.MoveY;
         }
         if (this.StateFillStyle0) {
             this.FillStyle0 = bs.getUIBits(currentNumBits.FillBits);
@@ -483,7 +485,7 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
             currentNumBits.LineBits = this.NumLineBits = numBits & 0x0f;
         }
     }
-    this.build = function(bs, tag_code, currentNumBits) {
+    this.build = function(bs, tag_code, currentNumBits, currentPosition) {
         bs.putUIBit(0); // TypeFlag:0
         bs.putUIBit(this.StateNewStyles)
         bs.putUIBit(this.StateLineStyle)
@@ -497,6 +499,8 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
             bs.putUIBits(moveBits, 5);
             bs.putSIBits(this.MoveX, moveBits); // MoveDeltaX
             bs.putSIBits(this.MoveY, moveBits); // MoveDeltaY
+            currentPosition.x = this.MoveX;
+            currentPosition.y = this.MoveY;
         }
         if (this.StateFillStyle0) {
             bs.putUIBits(this.FillStyle0, currentNumBits.FillBits);
@@ -520,31 +524,37 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
     }
 }
 
-
-var SWFSTRAIGHTEDGERECORD = function(bs, numBits) {
+var SWFSTRAIGHTEDGERECORD = function(bs, numBits, currentPosition) {
     this.TypeFlag = 1;
     this.StraightFlag = 1;
+    var deltaX, deltaY;
     if (bs) {
         this.NumBits = numBits;
         this.GeneralLineFlag = bs.getUIBit();
         if (this.GeneralLineFlag) {
-            this.DeltaX = bs.getSIBits(numBits + 2);
-            this.DeltaY = bs.getSIBits(numBits + 2);
+            deltaX = bs.getSIBits(numBits + 2);
+            deltaY = bs.getSIBits(numBits + 2);
         } else {
             this.VertLineFlag = bs.getUIBit();
             if (this.VertLineFlag) {
-                this.DeltaX = 0;
-                this.DeltaY = bs.getSIBits(numBits + 2);
+                deltaX = 0;
+                deltaY = bs.getSIBits(numBits + 2);
             } else {
-                this.DeltaX = bs.getSIBits(numBits + 2);
-                this.DeltaY = 0;
+                deltaX = bs.getSIBits(numBits + 2);
+                deltaY = 0;
             }
         }
+        this.X = currentPosition.x + deltaX;
+        this.Y = currentPosition.y + deltaY;
+        currentPosition.x = this.X;
+        currentPosition.y = this.Y;
     }
-    this.build = function(bs) {
+    this.build = function(bs, currentPosition) {
         bs.putUIBits(3, 2); // TypeFlag:1 + StraightFlag:1
-        var deltaXBits = bs.need_bits_signed(this.DeltaX);
-        var deltaYBits = bs.need_bits_signed(this.DeltaY);
+        var deltaX = this.X - currentPosition.x;
+        var deltaX = this.Y - currentPosition.x;
+        var deltaXBits = bs.need_bits_signed(deltaX);
+        var deltaYBits = bs.need_bits_signed(deltaY);
         var numBits = (deltaXBits > deltaYBits)?deltaXBits:deltaYBits;
         if (numBits < 2) {
             numBits = 0;
@@ -552,39 +562,51 @@ var SWFSTRAIGHTEDGERECORD = function(bs, numBits) {
             numBits -= 2;
         }
         bs.putUIBits(numBits, 4);
-        if (this.DeltaX && this.DeltaY) {
+        if (deltaX && deltaY) {
             bs.putUIBit(1); // GeneralLineFlag
-            bs.putSIBits(this.DeltaX, numBits + 2);
-            bs.putSIBits(this.DeltaY, numBits + 2);
+            bs.putSIBits(deltaX, numBits + 2);
+            bs.putSIBits(deltaY, numBits + 2);
         } else {
             bs.putUIBit(0); // GeneralLineFlag
-            if (this.DeltaY) {
+            if (deltaY) {
                 bs.putUIBit(1); // VertLineFlag
-                bs.putSIBits(this.DeltaY, numBits + 2);
+                bs.putSIBits(deltaY, numBits + 2);
             } else {
                 bs.putUIBit(0); // VertLineFlag
-                bs.putSIBits(this.DeltaX, numBits + 2);
+                bs.putSIBits(deltaX, numBits + 2);
             }
         }
+        currentPosition.x = this.X;
+        currentPosition.y = this.Y;
     }
 }
 
-var SWFCURVEDEDGERECORD = function(bs, numBits) {
+var SWFCURVEDEDGERECORD = function(bs, numBits, currentPosition) {
     this.TypeFlag = 1;
     this.StraightFlag = 0;
     if (bs) {
         this.NumBits = numBits;
-        this.ControlDeltaX = bs.getSIBits(numBits + 2);
-        this.ControlDeltaY = bs.getSIBits(numBits + 2);
-        this.AnchorDeltaX = bs.getSIBits(numBits + 2);
-        this.AnchorDeltaY = bs.getSIBits(numBits + 2);
+        var controlDeltaX = bs.getSIBits(numBits + 2);
+        var controlDeltaY = bs.getSIBits(numBits + 2);
+        var anchorDeltaX = bs.getSIBits(numBits + 2);
+        var anchorDeltaY = bs.getSIBits(numBits + 2);
+        this.ControlX = currentPosition.x + controlDeltaX;
+        this.ControlY = currentPosition.y + controlDeltaY;
+        this.AnchorX = this.ControlX + anchorDeltaX;
+        this.AnchorY = this.ControlY + anchorDeltaY;
+        currentPosition.x = this.AnchorX;
+        currentPosition.y = this.AnchorY;
     }
-    this.build = function(bs) {
+    this.build = function(bs, currentPosition) {
         bs.putUIBits(2, 2); // TypeFlag:1 + StraightFlag:0
-        var controlDeltaXBits = bs.need_bits_signed(this.ControlDeltaX);
-        var controlDeltaYBits = bs.need_bits_signed(this.ControlDeltaY);
-        var anchorDeltaXBits = bs.need_bits_signed(this.AnchorDeltaX);
-        var anchorDeltaYBits = bs.need_bits_signed(this.AnchorDeltaY);
+        var controlDeltaX = this.ControlX - currentPosition.x;
+        var controlDeltaY = this.ControlY - currentPosition.y;
+        var anchorDeltaX = this.AnchorX - this.ControlX;
+        var anchorDeltaY = this.AnchorY - this.ControlY;
+        var controlDeltaXBits = bs.need_bits_signed(controlDeltaX);
+        var controlDeltaYBits = bs.need_bits_signed(controlDeltaY);
+        var anchorDeltaXBits = bs.need_bits_signed(anchorDeltaX);
+        var anchorDeltaYBits = bs.need_bits_signed(anchorDeltaY);
         var numBits = (controlDeltaXBits > controlDeltaYBits)?controlDeltaXBits:controlDeltaYBits;
         numBits = (numBits > anchorDeltaXBits)?numBits:anchorDeltaXBits;
         numBits = (numBits > anchorDeltaYBits)?numBits:anchorDeltaYBits;
@@ -594,10 +616,12 @@ var SWFCURVEDEDGERECORD = function(bs, numBits) {
             numBits -= 2;
         }
         bs.putUIBits(numBits, 4);
-        bs.putSIBits(this.ControlDeltaX, numBits + 2);
-        bs.putSIBits(this.ControlDeltaY, numBits + 2);
-        bs.putSIBits(this.AnchorDeltaX,  numBits + 2);
-        bs.putSIBits(this.AnchorDeltaY,  numBits + 2);
+        bs.putSIBits(controlDeltaX, numBits + 2);
+        bs.putSIBits(controlDeltaY, numBits + 2);
+        bs.putSIBits(anchorDeltaX,  numBits + 2);
+        bs.putSIBits(anchorDeltaY,  numBits + 2);
+        currentPosition.x = this.AnchorX;
+        currentPosition.y = this.AnchorY;
     }
 }
 
@@ -605,19 +629,19 @@ var SWFSHAPERECORDS = function() { // SHAPEs
     this.parseRecords = function(bs, tag_code, currentNumBits) {
         var shapeRecords = [];
         var done = false;
-//var currentPosition = {x:0 y:0};
+        var currentPosition = {x:0, y:0};
         while (done === false) {
             var first6Bits = bs.getUIBits(6);
             if (first6Bits & 0x20) { // Edge
                 var numBits = first6Bits & 0x0f;
                 if (first6Bits & 0x10) { // StraigtEdge (11XXXX)
-                    var shape = new SWFSTRAIGHTEDGERECORD(bs, numBits);
+                    var shape = new SWFSTRAIGHTEDGERECORD(bs, numBits, currentPosition);
                 } else { // CurvedEdge (10XXXX)
-                    var shape = new SWFCURVEDEDGERECORD(bs, numBits);
+                    var shape = new SWFCURVEDEDGERECORD(bs, numBits, currentPosition);
                 }
             } else if (first6Bits) { // ChangeStyle (0XXXXX)
                 var changeFlag = first6Bits;
-                var shape = new SWFSTYLECHANGERECORD(bs, tag_code, changeFlag, currentNumBits);
+                var shape = new SWFSTYLECHANGERECORD(bs, tag_code, changeFlag, currentNumBits, currentPosition);
             } else { // EndOfShape (000000)
                 var shape = new SWFENDSHAPERECORD(bs);
             }
@@ -629,7 +653,7 @@ var SWFSHAPERECORDS = function() { // SHAPEs
        return shapeRecords;
     }
     this.buildRecords = function(shapeRecords, bs, tag_code, currentNumBits) {
-//var currentPosition = {x:0 y:0};
+        var currentPosition = {x:0, y:0};
 	for (var i = 0, n = shapeRecords.length ; i < n ; i++){
             shapeRecords[i].build(bs, tag_code, currentNumBits);
 	}
