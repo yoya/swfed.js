@@ -20,10 +20,10 @@ var zlib_inflate = function(data, offset) {
 }
 
 function zlib_deflate(str, offset, level) {
-    if(typeof offset == "undefined") {
+    if(typeof offset == 'undefined') {
 	offset = 0;
     }
-    if(typeof level == "undefined") {
+    if(typeof level == 'undefined') {
 	level = zip_DEFAULT_LEVEL;
     }
     var cmf = 0x78; // (CINFO=7 CM=8)
@@ -2527,12 +2527,12 @@ function zip_deflate(str, offset, level) {
     var i, j;
 
     zip_deflate_data = str;
-    if(typeof offset === "undefined") {
+    if(typeof offset === 'undefined') {
         zip_deflate_pos = 0;
     } else {
         zip_deflate_pos = offset;
     }
-    if(typeof level == "undefined")
+    if(typeof level == 'undefined')
 	level = zip_DEFAULT_LEVEL;
     zip_deflate_start(level);
 
