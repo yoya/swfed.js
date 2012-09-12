@@ -175,26 +175,26 @@ var SWFLANGCODE = function(bs) {
 	bs.putUI8(this.LanguageCode);
     }
     this.toString = function() {
-	var $codetext;
+	var codetext;
         switch (this.LanguageCode) {
         case 1:
-            $codetext = "Latin";
+            codetext = "Latin";
             break;
         case 2:
-            $codetext = "Japanese";
+            codetext = "Japanese";
             break;
         case 3:
-            $codetext = "Korean";
+            codetext = "Korean";
             break;
         case 4:
-            $codetext = "Simplified Chinese";
+            codetext = "Simplified Chinese";
             break;
         case 5:
-            $codetext = "Traditional Chinese";
+            codetext = "Traditional Chinese";
             break;
         default:
         }
-        return "{LanguageCode:"+this.LanguageCode+"("+$codetext+")";
+        return "{LanguageCode:"+this.LanguageCode+"("+codetext+")";
     }
 }
 
