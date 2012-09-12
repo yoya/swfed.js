@@ -1,45 +1,48 @@
 <html>
  <head>
-  <script type="text/javascript" src="iz.js"> </script>
-  <script type="text/javascript" src="crc32.js"> </script>
   <script type="text/javascript" src="canvas.js"> </script>
   <script type="text/javascript" src="bitstream.js"> </script>
-  <script type="text/javascript" src="bitmap.js"> </script>
   <script type="text/javascript" src="object.js"> </script>
   <script type="text/javascript" src="loader.js"> </script>
   <script type="text/javascript" src="parser.js"> </script>
   <script type="text/javascript" src="builder.js"> </script>
   <script type="text/javascript" src="editor.js"> </script>
-  <script type="text/javascript" src="scheduler.js"> </script>
-  <script type="text/javascript" src="player.js"> </script>
   <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
  </head>
  <body>
   <canvas id="mycanvas" width="240" height="240"> canvas is here</canvas>
-  <script type="text/javascript">
+  <script type="text/javascript"">
    var swf_url = 'saitama.swf';
+//   var swf_url = 'ffxi2.swf';
    var canvas_id = 'mycanvas'
    var canvas = new SWFCanvas(canvas_id);
    var swfed = new SWFEditor();
-   var player = new SWFPlayer(canvas, swfed);
-
    swfed.load(swf_url,
    function() { // main
-       player.play(true);
+      var swfheader = swfed.swfheader;
+      var swftags = swfed.swftags;
+      swfed.dump();
+      for (var i = 0, n = swftags.length ; i < n ; i++) {
+         var swftag = swftags[i];
+         switch (swftag.code) {
+	   case 9: // SetBackGroundColor
+	      canvas.setBackgroundColor(swftag.data.BackgroundColor);
+	      break;
+         }
+      }
+//      var swfed2 = new SWFEditor();
+//      swfed2.input(swfed.output());
+//      swfed2.dump();
    },
    function(i, n) { // progress
-       // loading animation
-       var width = canvas.width;
-       var height = canvas.height;
+       var width = canvas.canvas.width;
+       var height = canvas.canvas.height;
        var ratio1 = i/n;
        var ratio2 = (3*ratio1+1)/4;
        var ratio3 = (ratio2+1)/2;
        var colorStops = [[ratio1,'black'], [ratio2,'blue'], [ratio3,'black']];
        canvas.drawRadialGradient(width/2, height/2, width/2, colorStops);
-       canvas.clear();
-       player.play(false);
    });
-
   </script>
  </body>
 </html>

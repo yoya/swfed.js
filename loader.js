@@ -1,3 +1,7 @@
+/*
+ * 2012/01/03- (c) yoya@awm.jp
+ */
+
 var SWFLoader = function(){
     var error_notified = false;
     this.load = function(url, parser) {

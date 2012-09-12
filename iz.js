@@ -1,3 +1,8 @@
+/*
+ * 2012/01/09- (c) yoya@awm.jp
+ * zlib wrapper and some customize. originated by Masanao Izumo.
+ */
+
 (function(){
 
 var zlib_inflate = function(data, offset) {
@@ -15,10 +20,10 @@ var zlib_inflate = function(data, offset) {
 }
 
 function zlib_deflate(str, offset, level) {
-    if(typeof offset == "undefined") {
+    if(typeof offset == 'undefined') {
 	offset = 0;
     }
-    if(typeof level == "undefined") {
+    if(typeof level == 'undefined') {
 	level = zip_DEFAULT_LEVEL;
     }
     var cmf = 0x78; // (CINFO=7 CM=8)
@@ -63,32 +68,32 @@ function base64encode(str) {
 
     len = str.length;
     i = 0;
-    out = "";
+    out = [];
     while(i < len) {
 	c1 = str.charCodeAt(i++) & 0xff;
 	if(i == len)
 	{
-	    out += base64EncodeChars.charAt(c1 >> 2);
-	    out += base64EncodeChars.charAt((c1 & 0x3) << 4);
-	    out += "==";
+	    out.push(base64EncodeChars.charAt(c1 >> 2));
+	    out.push(base64EncodeChars.charAt((c1 & 0x3) << 4));
+	    out.push('==');
 	    break;
 	}
 	c2 = str.charCodeAt(i++);
 	if(i == len)
 	{
-	    out += base64EncodeChars.charAt(c1 >> 2);
-	    out += base64EncodeChars.charAt(((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4));
-	    out += base64EncodeChars.charAt((c2 & 0xF) << 2);
-	    out += "=";
+	    out.push(base64EncodeChars.charAt(c1 >> 2));
+	    out.push(base64EncodeChars.charAt(((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4)));
+	    out.push(base64EncodeChars.charAt((c2 & 0xF) << 2));
+	    out.push('=');
 	    break;
 	}
 	c3 = str.charCodeAt(i++);
-	out += base64EncodeChars.charAt(c1 >> 2);
-	out += base64EncodeChars.charAt(((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4));
-	out += base64EncodeChars.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >>6));
-	out += base64EncodeChars.charAt(c3 & 0x3F);
+	out.push(base64EncodeChars.charAt(c1 >> 2));
+	out.push(base64EncodeChars.charAt(((c1 & 0x3)<< 4) | ((c2 & 0xF0) >> 4)));
+	out.push(base64EncodeChars.charAt(((c2 & 0xF) << 2) | ((c3 & 0xC0) >>6)));
+	out.push(base64EncodeChars.charAt(c3 & 0x3F));
     }
-    return out;
+    return out.join('');
 }
 
 function base64decode(str) {
@@ -97,7 +102,7 @@ function base64decode(str) {
 
     len = str.length;
     i = 0;
-    out = "";
+    out = [];
     while(i < len) {
 	/* c1 */
 	do {
@@ -113,33 +118,34 @@ function base64decode(str) {
 	if(c2 == -1)
 	    break;
 
-	out += String.fromCharCode((c1 << 2) | ((c2 & 0x30) >> 4));
+	out.push(String.fromCharCode((c1 << 2) | ((c2 & 0x30) >> 4)));
 
 	/* c3 */
 	do {
 	    c3 = str.charCodeAt(i++) & 0xff;
 	    if(c3 == 61)
-		return out;
+		return out.join('');
 	    c3 = base64DecodeChars[c3];
 	} while(i < len && c3 == -1);
 	if(c3 == -1)
 	    break;
 
-	out += String.fromCharCode(((c2 & 0XF) << 4) | ((c3 & 0x3C) >> 2));
+	out.push(String.fromCharCode(((c2 & 0XF) << 4) | ((c3 & 0x3C) >> 2)));
 
 	/* c4 */
 	do {
 	    c4 = str.charCodeAt(i++) & 0xff;
 	    if(c4 == 61)
-		return out;
+		return out.join('');
 	    c4 = base64DecodeChars[c4];
 	} while(i < len && c4 == -1);
 	if(c4 == -1)
 	    break;
-	out += String.fromCharCode(((c3 & 0x03) << 6) | c4);
+	out.push(String.fromCharCode(((c3 & 0x03) << 6) | c4));
     }
-    return out;
+    return out.join('');
 }
+
 /* Copyright (C) 1999 Masanao Izumo <iz@onicos.co.jp>
  * Version: 1.0.0.1
  * LastModified: Dec 25 1999
@@ -2521,12 +2527,12 @@ function zip_deflate(str, offset, level) {
     var i, j;
 
     zip_deflate_data = str;
-    if(typeof offset === "undefined") {
+    if(typeof offset === 'undefined') {
         zip_deflate_pos = 0;
     } else {
         zip_deflate_pos = offset;
     }
-    if(typeof level == "undefined")
+    if(typeof level == 'undefined')
 	level = zip_DEFAULT_LEVEL;
     zip_deflate_start(level);
 

@@ -1,4 +1,6 @@
-
+/*
+ * 2012/01/03- (c) yoya@awm.jp
+ */
 
 var SWFTagNames = {
     0:"End",
@@ -43,6 +45,7 @@ var SWFTagNames = {
     59:"DoInitAction",
     60:"DefineBideoStream",
     61:"VideoFrame",
+    88:"DefineFontName",
 };
 
 
@@ -164,6 +167,37 @@ var SWFMATRIX = function(bs) {
     }
 }
 
+var SWFLANGCODE = function(bs) {
+    if (bs) {
+	this.LanguageCode = bs.getUI8();
+    }
+    this.build = function(bs) {
+	bs.putUI8(this.LanguageCode);
+    }
+    this.toString = function() {
+	var $codetext;
+        switch (this.LanguageCode) {
+        case 1:
+            $codetext = "Latin";
+            break;
+        case 2:
+            $codetext = "Japanese";
+            break;
+        case 3:
+            $codetext = "Korean";
+            break;
+        case 4:
+            $codetext = "Simplified Chinese";
+            break;
+        case 5:
+            $codetext = "Traditional Chinese";
+            break;
+        default:
+        }
+        return "{LanguageCode:"+this.LanguageCode+"("+$codetext+")";
+    }
+}
+
 var SWFRGB = function(bs) {
     if (bs) {
 	this.Red = bs.getUI8();
@@ -220,6 +254,34 @@ var SWFARGB = function(bs) {
     }
 }
 
+var SWFFOCALGRADIENT = function(bs, tag_code) {
+    if (bs) {
+	bs.byteAlign();
+	this.SpreadMode = bs.getUIBits(2);
+	this.InterpolationMode = bs.getUIBits(2);
+	var numGradients = bs.getUIBits(4);
+	this.NumGradients = numGradients;
+	var gradientRecords = [];
+	for (i = 0 ; i < numGradients ; i++) {
+	    gradientRecords.push(new SWFGRADRECORD(bs, tag_code));
+	}
+	this.GradientRecords = gradientRecords;
+	this.FocalPoint = bs.getUI8();
+    }
+    this.build = function(bs) {
+        bs.byteAlign();
+	bs.putUIBits(this.SpreadMode, 2);
+	bs.putUIBits(this.InterpolationMode, 2);
+        var gradientRecords = this.GradientRecords;
+        var numGradients = gradientRecords.length;
+        bs.putUIBits(numGradients, 4);
+	for (i = 0 ; i < numGradients ; i++) {
+	    gradientRecords[i].build(bs);
+	}
+        bs.putUI8(this.FocalPoint);
+    }
+}
+
 var SWFGRADRECORD = function(bs, tag_code) {
     this.Ratio = bs.getUI8();
     if (tag_code < 32) { // DefineShape1or2
@@ -228,6 +290,7 @@ var SWFGRADRECORD = function(bs, tag_code) {
 	this.Color = new SWFRGBA(bs);
     }
     this.build = function(bs) {
+        bs.putUI8(this.Ratio);
         this.Color.build(bs);
     }
 }
@@ -241,13 +304,13 @@ var SWFGRADIENT = function(bs, tag_code) {
 	this.NumGradients = numGradients;
 	var gradientRecords = [];
 	for (i = 0 ; i < numGradients ; i++) {
-	    gradientRecords.push(new SWFGRADRECORD(bs));
+	    gradientRecords.push(new SWFGRADRECORD(bs, tag_code));
 	}
 	this.GradientRecords = gradientRecords;
     }
     this.build = function(bs) {
         bs.byteAlign();
-	bs.putUIBitst(his.SpreadMode, 2);
+	bs.putUIBits(this.SpreadMode, 2);
 	bs.putUIBits(this.InterpolationMode, 2);
         var gradientRecords = this.GradientRecords;
         var numGradients = gradientRecords.length;
@@ -272,11 +335,11 @@ var SWFFILLSTYLE = function(bs, tag_code) {
 	case 0x10: // linear gradient fill
 	case 0x12: // radial gradient fill
 	    this.GradientMatrix = new SWFMATRIX(bs);
-	    this.Gradient = new SWFGRADIENT(bs);
+	    this.Gradient = new SWFGRADIENT(bs, tag_code);
 	    break;
 	case 0x13: // focal radial gradient fill
 	    this.GradientMatrix = new SWFMATRIX(bs);
-	    // this.Gradient = new SWFFOCALGRADIENT(bs);
+	    this.Gradient = new SWFFOCALGRADIENT(bs, tag_code);
 	    break;
 	case 0x40: // repeating bitmap fill
 	case 0x41: // clipped bitmap fill
@@ -295,9 +358,6 @@ var SWFFILLSTYLE = function(bs, tag_code) {
 	    break;
 	case 0x10: // linear gradient fill
 	case 0x12: // radial gradient fill
-	    this.GradientMatrix.build(bs);
-	    this.Gradient.build(bs);
-	    break;
 	case 0x13: // focal radial gradient fill
 	    this.GradientMatrix.build(bs);
 	    this.Gradient.build(bs);
@@ -343,11 +403,11 @@ var SWFFILLSTYLEARRAY = function(bs, tag_code) {
     }
     this.build = function(bs, tag_code) {
         fillStyleCount = this.FillStyles.length;
-	if ((tag_code > 2) && (fillStyleCount >= 0xff)) {
+	if ((tag_code < 22) || (fillStyleCount < 0xff)) {
+            bs.putUI8(fillStyleCount);
+	} else {
             bs.putUI8(0xff);
 	    bs.putUI16LE(fillStyleCount);
-	} else {
-            bs.putUI8(fillStyleCount);
         }
 	for (var i = 0 ; i < fillStyleCount ; i++) {
 	    fillStyles[i].build(bs);
@@ -370,11 +430,11 @@ var SWFLINESTYLEARRAY = function(bs, tag_code) {
     }
     this.build = function(bs, tag_code) {
         lineStyleCount = this.LineStyles.length;
-	if ((tag_code > 2) && (lineStyleCount >= 0xff)) {
+	if ((tag_code < 22) || (lineStyleCount < 0xff)) {
+            bs.putUI8(lineStyleCount);
+	} else {
             bs.putUI8(0xff);
 	    bs.putUI16LE(lineStyleCount);
-	} else {
-            bs.putUI8(lineStyleCount);
         }
 	for (var i = 0 ; i < lineStyleCount ; i++) {
 	    lineStyles[i].build(bs);
@@ -391,7 +451,7 @@ var SWFENDSHAPERECORD = function(bs) {
     }
 }
 
-var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
+var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits, currentPosition) {
     if (bs) {
         this.StateNewStyles  = (changeFlag >> 4) & 1;
         this.StateLineStyle  = (changeFlag >> 3) & 1;
@@ -403,6 +463,8 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
             this.MoveBits = moveBits;
             this.MoveX = bs.getSIBits(moveBits); // MoveDeltaX
             this.MoveY = bs.getSIBits(moveBits); // MoveDeltaY
+            currentPosition.x = this.MoveX;
+            currentPosition.y = this.MoveY;
         }
         if (this.StateFillStyle0) {
             this.FillStyle0 = bs.getUIBits(currentNumBits.FillBits);
@@ -423,7 +485,7 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
             currentNumBits.LineBits = this.NumLineBits = numBits & 0x0f;
         }
     }
-    this.build = function(bs, currentNumBits) {
+    this.build = function(bs, tag_code, currentNumBits, currentPosition) {
         bs.putUIBit(0); // TypeFlag:0
         bs.putUIBit(this.StateNewStyles)
         bs.putUIBit(this.StateLineStyle)
@@ -437,6 +499,8 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
             bs.putUIBits(moveBits, 5);
             bs.putSIBits(this.MoveX, moveBits); // MoveDeltaX
             bs.putSIBits(this.MoveY, moveBits); // MoveDeltaY
+            currentPosition.x = this.MoveX;
+            currentPosition.y = this.MoveY;
         }
         if (this.StateFillStyle0) {
             bs.putUIBits(this.FillStyle0, currentNumBits.FillBits);
@@ -460,31 +524,37 @@ var SWFSTYLECHANGERECORD = function(bs, tag_code, changeFlag, currentNumBits) {
     }
 }
 
-
-var SWFSTRAIGHTEDGERECORD = function(bs, numBits) {
+var SWFSTRAIGHTEDGERECORD = function(bs, numBits, currentPosition) {
     this.TypeFlag = 1;
     this.StraightFlag = 1;
+    var deltaX, deltaY;
     if (bs) {
         this.NumBits = numBits;
         this.GeneralLineFlag = bs.getUIBit();
         if (this.GeneralLineFlag) {
-            this.DeltaX = bs.getSIBits(numBits + 2);
-            this.DeltaY = bs.getSIBits(numBits + 2);
+            deltaX = bs.getSIBits(numBits + 2);
+            deltaY = bs.getSIBits(numBits + 2);
         } else {
             this.VertLineFlag = bs.getUIBit();
             if (this.VertLineFlag) {
-                this.DeltaX = 0;
-                this.DeltaY = bs.getSIBits(numBits + 2);
+                deltaX = 0;
+                deltaY = bs.getSIBits(numBits + 2);
             } else {
-                this.DeltaX = bs.getSIBits(numBits + 2);
-                this.DeltaY = 0;
+                deltaX = bs.getSIBits(numBits + 2);
+                deltaY = 0;
             }
         }
+        this.X = currentPosition.x + deltaX;
+        this.Y = currentPosition.y + deltaY;
+        currentPosition.x = this.X;
+        currentPosition.y = this.Y;
     }
-    this.build = function(bs) {
+    this.build = function(bs, currentPosition) {
         bs.putUIBits(3, 2); // TypeFlag:1 + StraightFlag:1
-        var deltaXBits = bs.need_bits_signed(this.DeltaX);
-        var deltaYBits = bs.need_bits_signed(this.DeltaY);
+        var deltaX = this.X - currentPosition.x;
+        var deltaX = this.Y - currentPosition.x;
+        var deltaXBits = bs.need_bits_signed(deltaX);
+        var deltaYBits = bs.need_bits_signed(deltaY);
         var numBits = (deltaXBits > deltaYBits)?deltaXBits:deltaYBits;
         if (numBits < 2) {
             numBits = 0;
@@ -492,39 +562,51 @@ var SWFSTRAIGHTEDGERECORD = function(bs, numBits) {
             numBits -= 2;
         }
         bs.putUIBits(numBits, 4);
-        if (this.DeltaX && this.DeltaY) {
+        if (deltaX && deltaY) {
             bs.putUIBit(1); // GeneralLineFlag
-            bs.putSIBits(this.DeltaX, numBits + 2);
-            bs.putSIBits(this.DeltaY, numBits + 2);
+            bs.putSIBits(deltaX, numBits + 2);
+            bs.putSIBits(deltaY, numBits + 2);
         } else {
             bs.putUIBit(0); // GeneralLineFlag
-            if (this.DeltaY) {
+            if (deltaY) {
                 bs.putUIBit(1); // VertLineFlag
-                bs.putSIBits(this.DeltaY, numBits + 2);
+                bs.putSIBits(deltaY, numBits + 2);
             } else {
                 bs.putUIBit(0); // VertLineFlag
-                bs.putSIBits(this.DeltaX, numBits + 2);
+                bs.putSIBits(deltaX, numBits + 2);
             }
         }
+        currentPosition.x = this.X;
+        currentPosition.y = this.Y;
     }
 }
 
-var SWFCURVEDEDGERECORD = function(bs, numBits) {
+var SWFCURVEDEDGERECORD = function(bs, numBits, currentPosition) {
     this.TypeFlag = 1;
     this.StraightFlag = 0;
     if (bs) {
         this.NumBits = numBits;
-        this.ControlDeltaX = bs.getSIBits(numBits + 2);
-        this.ControlDeltaY = bs.getSIBits(numBits + 2);
-        this.AnchorDeltaX = bs.getSIBits(numBits + 2);
-        this.AnchorDeltaY = bs.getSIBits(numBits + 2);
+        var controlDeltaX = bs.getSIBits(numBits + 2);
+        var controlDeltaY = bs.getSIBits(numBits + 2);
+        var anchorDeltaX = bs.getSIBits(numBits + 2);
+        var anchorDeltaY = bs.getSIBits(numBits + 2);
+        this.ControlX = currentPosition.x + controlDeltaX;
+        this.ControlY = currentPosition.y + controlDeltaY;
+        this.AnchorX = this.ControlX + anchorDeltaX;
+        this.AnchorY = this.ControlY + anchorDeltaY;
+        currentPosition.x = this.AnchorX;
+        currentPosition.y = this.AnchorY;
     }
-    this.build = function(bs) {
+    this.build = function(bs, currentPosition) {
         bs.putUIBits(2, 2); // TypeFlag:1 + StraightFlag:0
-        var controlDeltaXBits = bs.need_bits_signed(this.ControlDeltaX);
-        var controlDeltaYBits = bs.need_bits_signed(this.ControlDeltaY);
-        var anchorDeltaXBits = bs.need_bits_signed(this.AnchorDeltaX);
-        var anchorDeltaYBits = bs.need_bits_signed(this.AnchorDeltaY);
+        var controlDeltaX = this.ControlX - currentPosition.x;
+        var controlDeltaY = this.ControlY - currentPosition.y;
+        var anchorDeltaX = this.AnchorX - this.ControlX;
+        var anchorDeltaY = this.AnchorY - this.ControlY;
+        var controlDeltaXBits = bs.need_bits_signed(controlDeltaX);
+        var controlDeltaYBits = bs.need_bits_signed(controlDeltaY);
+        var anchorDeltaXBits = bs.need_bits_signed(anchorDeltaX);
+        var anchorDeltaYBits = bs.need_bits_signed(anchorDeltaY);
         var numBits = (controlDeltaXBits > controlDeltaYBits)?controlDeltaXBits:controlDeltaYBits;
         numBits = (numBits > anchorDeltaXBits)?numBits:anchorDeltaXBits;
         numBits = (numBits > anchorDeltaYBits)?numBits:anchorDeltaYBits;
@@ -534,14 +616,71 @@ var SWFCURVEDEDGERECORD = function(bs, numBits) {
             numBits -= 2;
         }
         bs.putUIBits(numBits, 4);
-        bs.putSIBits(this.ControlDeltaX, numBits + 2);
-        bs.putSIBits(this.ControlDeltaY, numBits + 2);
-        bs.putSIBits(this.AnchorDeltaX,  numBits + 2);
-        bs.putSIBits(this.AnchorDeltaY,  numBits + 2);
+        bs.putSIBits(controlDeltaX, numBits + 2);
+        bs.putSIBits(controlDeltaY, numBits + 2);
+        bs.putSIBits(anchorDeltaX,  numBits + 2);
+        bs.putSIBits(anchorDeltaY,  numBits + 2);
+        currentPosition.x = this.AnchorX;
+        currentPosition.y = this.AnchorY;
     }
 }
 
-var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
+var SWFSHAPERECORDS = function() { // SHAPEs
+    this.parseRecords = function(bs, tag_code, currentNumBits) {
+        var shapeRecords = [];
+        var done = false;
+        var currentPosition = {x:0, y:0};
+        while (done === false) {
+            var first6Bits = bs.getUIBits(6);
+            if (first6Bits & 0x20) { // Edge
+                var numBits = first6Bits & 0x0f;
+                if (first6Bits & 0x10) { // StraigtEdge (11XXXX)
+                    var shape = new SWFSTRAIGHTEDGERECORD(bs, numBits, currentPosition);
+                } else { // CurvedEdge (10XXXX)
+                    var shape = new SWFCURVEDEDGERECORD(bs, numBits, currentPosition);
+                }
+            } else if (first6Bits) { // ChangeStyle (0XXXXX)
+                var changeFlag = first6Bits;
+                var shape = new SWFSTYLECHANGERECORD(bs, tag_code, changeFlag, currentNumBits, currentPosition);
+            } else { // EndOfShape (000000)
+                var shape = new SWFENDSHAPERECORD(bs);
+            }
+            shapeRecords.push(shape);
+            if (shape instanceof SWFENDSHAPERECORD) {
+                done = true;
+            }
+        }
+       return shapeRecords;
+    }
+    this.buildRecords = function(shapeRecords, bs, tag_code, currentNumBits) {
+        var currentPosition = {x:0, y:0};
+	for (var i = 0, n = shapeRecords.length ; i < n ; i++){
+            shapeRecords[i].build(bs, tag_code, currentNumBits);
+	}
+    }
+}
+
+var SWFSHAPE = function(bs, tag_code) {
+    if (bs) {
+	var numBits = bs.getUI8();
+	this.NumFillBits = numBits >> 4;
+	this.NumLineBits = numBits & 0x0f;
+	var currentNumBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
+        var shapes = new SWFSHAPERECORDS();
+        this.ShapeRecords = shapes.parseRecords(bs, tag_code, currentNumBits);
+    }
+    this.build = function(bs, tag_code, currentNumBits) {
+	var numBits =  (currentNumBits.FillBits << 4) | currentNumBits.LineBits;
+        bs.putUI8(numBits);
+        var shapes = new SWFSHAPERECORDS();
+        shapes.buildRecords(this.ShapeRecords, bs, tag_code, currentNumBits);
+    }
+    this.toString = function() {
+	return "{numFillBits:"+this.NumFillBits+" NumLineBits:"+this.NumLineBits+" ShapeRecords:"+this.ShapeRecords+"}";
+    }
+}
+
+var SWFSHAPEWITHSTYLE = function(bs, tag_code, currentNumBits) {
     if (bs) {
 	this.FillStyles = new SWFFILLSTYLEARRAY(bs, tag_code);
 	this.LineStyles = new SWFLINESTYLEARRAY(bs, tag_code);
@@ -549,28 +688,8 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
 	this.NumFillBits = numBits >> 4;
 	this.NumLineBits = numBits & 0x0f;
 	var currentNumBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
-	var done = false;
-	this.ShapeRecords = [];
-	while (done === false) {
-            var first6Bits = bs.getUIBits(6);
-            if (first6Bits & 0x20) { // Edge
-                var numBits = first6Bits & 0x0f;
-                if (first6Bits & 0x10) { // StraigtEdge (11XXXX)
-                    var shape = new SWFSTRAIGHTEDGERECORD(bs, numBits);
-                } else { // CurvedEdge (10XXXX)
-                    var shape = new SWFCURVEDEDGERECORD(bs, numBits);
-                }
-            } else if (first6Bits) { // ChangeStyle (0XXXXX)
-                var changeFlag = first6Bits;
-                var shape = new SWFSTYLECHANGERECORD(bs, tag_code, changeFlag, currentNumBits);
-            } else { // EndOfShape (000000)
-                var shape = new SWFENDSHAPERECORD(bs);
-            }
-	    this.ShapeRecords.push(shape);
-	    if (shape instanceof SWFENDSHAPERECORD) {
-		done = true;
-	    }
-	}
+        var shapes = new SWFSHAPERECORDS();
+        this.ShapeRecords = shapes.parseRecords(bs, tag_code, currentNumBits);
     }
     this.build = function(bs, tag_code) {
 	this.FillStyles.build(bs, tag_code);
@@ -579,11 +698,9 @@ var SWFSHAPEWITHSTYLE = function(bs, tag_code) {
         this.NumLineBits = bs.need_bits_unsigned(this.LineStyles.LineStyles.length);
 	var numBits =  (this.NumFillBits << 4) | this.NumLineBits;
         bs.putUI8(numBits);
-	var numBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
-        var shapeRecords = this.ShapeRecords;
-	for (var i = 0, n = shapeRecords.length ; i < n ; i++){
-	    shapeRecords[i].build(bs, numBits);
-	}
+	var currentNumBits = {FillBits:this.NumFillBits, LineBits:this.NumLineBits};
+        var shapes = new SWFSHAPERECORDS();
+        shapes.buildRecords(this.ShapeRecords, bs, tag_code, currentNumBits);
     }
     this.toString = function() {
 	return "{FillStyles:"+this.FillStyles+" LineStyles:"+this.LineStyles+" numFillBits:"+this.NumFillBits+" NumLineBits:"+this.NumLineBits+" ShapeRecords:"+this.ShapeRecords+"}";
@@ -778,27 +895,30 @@ var SWFMovieHeader = function(bs) {
 
 /* Tag */
 
-var SWFEnd = function(bs, tag_code) { // code:0
+var SWFEnd = function(bs, tag_code, length) { // code:0
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
     }
     this.build = function(bs) {
         ;
     }
 }
 
-var SWFShowFrame = function(bs, tag_code) { // code:1
+var SWFShowFrame = function(bs, tag_code, length) { // code:1
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
     }
     this.build = function(bs) {
         ;
     }
 }
 
-var SWFDefineShape = function(bs, tag_code) { // 2
+var SWFDefineShape = function(bs, tag_code, length) { // 2,22,32
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.ShapeId = bs.getUI16LE();
 	this.ShapeBounds = new SWFRECT(bs);
 	this.Shapes = new SWFSHAPEWITHSTYLE(bs, tag_code);
@@ -814,6 +934,7 @@ var SWFDefineShape = function(bs, tag_code) { // 2
 var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
         if (tag_code === 4) { // PlaceObject
             var byteOffset = bs.byte_offset;
             this.CharacterId = bs.getUI16LE();
@@ -902,9 +1023,10 @@ var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
     }
 }
 
-var SWFRemoveObject = function(bs, tag_code) { // 5, 28
+var SWFRemoveObject = function(bs, tag_code, length) { // 5, 28
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
         if (tag_code === 5) { // RemoveObject
             this.CharacterId = bs.getUI16LE();
             this.Depth = bs.getUI16LE();
@@ -925,6 +1047,7 @@ var SWFRemoveObject = function(bs, tag_code) { // 5, 28
 var SWFDefineBitsJPEG = function(bs, tag_code, length) { // code:6, 21, 35
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.CharacterID = bs.getUI16LE();
         var imageDataLen = length - 2;
         if (tag_code === 35) { // DefineBitsJPEG3
@@ -951,6 +1074,7 @@ var SWFDefineBitsJPEG = function(bs, tag_code, length) { // code:6, 21, 35
 var SWFJPEGTables = function(bs, tag_code, length) { // code:8
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
         var imageDataLen = length;
 	this.JPEGData = bs.getData(length);
     }
@@ -959,9 +1083,10 @@ var SWFJPEGTables = function(bs, tag_code, length) { // code:8
     }
 }
 
-var SWFSetBackgroundColor = function(bs, tag_code) { // 9
+var SWFSetBackgroundColor = function(bs, tag_code, length) { // code:9
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.BackgroundColor = new SWFRGB(bs);
     }
     this.build = function(bs) {
@@ -969,9 +1094,176 @@ var SWFSetBackgroundColor = function(bs, tag_code) { // 9
     }
 }
 
+var SWFDefineFont = function(bs, tag_code, length) { // code:10,48
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+	this.FontID = bs.getUI16LE();
+        if (tag_code == 10) { // DefineFont
+            var numGlyphs = bs.getUI16LE(); // ???
+            this.NumGlyphs = numGlyphs; // ???
+            var offsetTable = [];
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                offsetTable.push(bs.getUI16LE());
+            }
+            this.OffsetTable = offsetTable;
+            var glyphShapeTable = [];
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                glyphShapeTable.push(new SWFSHAPE(bs, tag_code));
+            }
+            this.GlyphShapeTable = glyphShapeTable;
+        } else { // 48: DefineFont2
+            var fontFlags = bs.getUI8();
+            this.FontFlagsHasLayout   = (fontFlags >>> 7) & 1;
+            this.FontFlagsShiftJIS    = (fontFlags >>> 6) & 1;
+            this.FontFlagsSmallText   = (fontFlags >>> 5) & 1;
+            this.FontFlagsANSI        = (fontFlags >>> 4) & 1;
+            this.FontFlagsWideOffsets = (fontFlags >>> 3) & 1;
+            this.FontFlagsWideCodes   = (fontFlags >>> 2) & 1;
+            this.FontFlagsItalic      = (fontFlags >>> 1) & 1;
+            this.FontFlagsBold        = (fontFlags      ) & 1;
+            this.LanguageCode = new SWFLANGCODE(bs, tag_code);
+            this.FontNameLen = bs.getUI8();
+            if (this.FontNameLen) {
+                this.FontName = bs.getData(this.FontNameLen);
+            }
+            var numGlyphs = bs.getUI16LE();
+            this.NumGlyphs = numGlyphs;
+            if (numGlyphs === 0) {
+                return ; // no glyphs field.
+            }
+            var offsetTable = [];
+            if (this.FontFlagsWideOffsets) {
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    offsetTable.push(bs.getUI32LE());
+                }
+                this.OffsetTable = offsetTable;
+                this.CodeTableOffset = bs.getUI32LE();
+            } else {
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    offsetTable.push(bs.getUI16LE());
+                }
+                this.OffsetTable = offsetTable;
+                this.CodeTableOffset = bs.getUI16LE();
+            }
+            var glyphShapeTable = [];
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                glyphShapeTable.push(new SWFSHAPE(bs, tag_code));
+            }
+            this.GlyphShapeTable = glyphShapeTable;
+            var codeTable = [];
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                codeTable.push(bs.getUI16LE());
+            }
+            this.CodeTable = codeTable;
+            if (this.FontFlagsHasLayout) {
+                this.FontAscent = bs.getUI16LE();
+                this.FontDescent = bs.getUI16LE();
+                this.FontLeading = bs.getUI16LE();
+                var fontAdvanceTable = [];
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    fontAdvanceTable.push(bs.getUI16LE());
+                }
+                this.FontAdvanceTable = fontAdvanceTable;
+                var fontBoundsTable = [];
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    fontBoundsTable.push(new SWFRECT(bs));
+                }
+                this.FontBoundsTable = fontBoundsTable;
+            }
+        }
+    }
+    this.build = function(bs) {
+	bs.putUI16LE(this.FontID);
+        if (this.tag_code == 10) { // DefineFont
+            var numGlyphs = offsetTable.length;
+            bs.putUI16LE(numGlyphs); // ???
+            this.NumGlyphs = numGlyphs;
+            for (i = 0 ; i < numGlyphs ; i++) {
+                bs.putUI16LE(this.OffsetTable[i]);
+            }
+            var currentNumBits = {FillBits:0, LineBits:0};
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                this.GlyphShapeTable[i].build(bs, this.tag_code, currentNumBits);
+            }
+        } else { // 48: DefineFont2
+            bs.putUI8((this.FontFlagsHasLayout   << 7) |
+                      (this.FontFlagsShiftJIS    << 6) |
+                      (this.FontFlagsSmallText   << 5) |
+                      (this.FontFlagsANSI        << 4) |
+                      (this.FontFlagsWideOffsets << 3) |
+                      (this.FontFlagsWideCodes   << 2) |
+                      (this.FontFlagsItalic      << 1) |
+                      this.FontFlagsBold);
+            this.LanguageCode.build(bs);
+            this.FontNameLen = this.FontName.length;
+            bs.putUI8(this.FontNameLen);
+            if (this.FontNameLen) {
+                bs.putData(this.FontName);
+            }
+            numGlyphs = this.OffsetTable.length;
+            this.NumGlyphs = numGlyphs;
+            bs.putUI16LE(numGlyphs);
+            if (numGlyphs === 0) {
+                return ; // no glyphs field.
+            }
+            var offsetOfOffsetTable = [];
+            if (this.FontFlagsWideOffsets) {
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    offsetOfOffsetTable.push(bs.getOffset().byte_offset);
+                    bs.putUI32LE(0); // dummy
+                }
+                bs.putUI32LE(0); // CodeTableOffset dummy
+            } else {
+                for (var i = 0 ; i < numGlyphs ; i++) {
+                    offsetOfOffsetTable.push(bs.getOffset().byte_offset);
+                    bs.putUI16LE(0); // dummy
+                }
+                var offsetOfCodeTableOffset = bs.getOffset();
+                bs.putUI16LE(0); // CodeTableOffset dummy
+            }
+            var currentNumBits = {FillBits:0, LineBits:0};
+            for (var i = 0 ; i < numGlyphs ; i++) {
+                this.GlyphShapeTable[i].build(bs, this.tag_code, currentNumBits);
+            }
+        }
+    }
+}
+
+
+var SWFDefineFontName = function(bs, tag_code, length) { // code:48
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+	this.FontID = bs.getUI16LE();
+        this.FontName = bs.getDataUntil("\0"); // STRING
+        this.FontCopyright = bs.getDataUntil("\0"); // STRING
+    }
+    this.build = function(bs) {
+	bs.putUI16LE(this.FontID);
+        bs.putData(this.FontName+"\0"); // STRING
+        bs.putData(this.FontCopyright+"\0"); // STRING
+    }
+}
+
+var SWFDoAction = function(bs, tag_code, length) { // code:12
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+        this.Actions = bs.getData(length - 1);
+        this.ActionEndFlag = bs.getUI8();
+    }
+    this.build = function(bs) {
+        bs.putData(this.Actions);
+        bs.putUI8(0);
+    }
+}
+
+
 var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.CharacterID = bs.getUI16LE();
 	this.BitmapFormat = bs.getUI8();
 	this.BitmapWidth = bs.getUI16LE();
@@ -995,9 +1287,349 @@ var SWFDefineBitsLossless = function(bs, tag_code, length) { // code:20,36
     }
 }
 
-var SWFUnknownTag = function(bs, tag_code, length) { // code:20,36
+var SWFProtect = function(bs, tag_code, length) { // code:24
     if (bs) {
         this.tag_code = tag_code;
+        this.tag_length =  length;
+    }
+    this.build = function(bs) {
+        ;
+    }
+}
+
+var SWFDefineEditText = function(bs, tag_code, length) { // code:37
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+        this.CharacterID = bs.getUI16LE();
+        this.Bound = new SWFRECT(bs);
+        var flag1 = bs.getUI8();
+        this.HasText      = (flag1 >>> 7) & 1;
+        this.WordWrap     = (flag1 >>> 6) & 1;
+        this.Multiline    = (flag1 >>> 5) & 1;
+        this.Password     = (flag1 >>> 4) & 1;
+        this.ReadOnly     = (flag1 >>> 3) & 1;
+        this.HasTextColor = (flag1 >>> 2) & 1;
+        this.HasMaxLength = (flag1 >>> 1) & 1;
+        this.HasFont      =  flag1        & 1;
+        var flag2 = bs.getUI8();
+        this.HasFontClass = (flag2 >>> 7) & 1;
+        this.AutoSize     = (flag2 >>> 6) & 1;
+        this.HasLayout    = (flag2 >>> 5) & 1;
+        this.NoSelect     = (flag2 >>> 4) & 1;
+        this.Border       = (flag2 >>> 3) & 1;
+        this.WasStatic    = (flag2 >>> 2) & 1;
+        this.HTML         = (flag2 >>> 1) & 1;
+        this.UseOutlines  =  flag2        & 1;
+        if (this.HasFont) {
+            this.FontID = bs.getUI16LE();
+            if (this.HasFontClass) { // can't be true if hasFont is true
+                this.FontClass = bs.getDataUntil("\0"); // STRING
+            }
+            this.FontHeight = bs.getUI16LE();
+        }
+        if (this.HasTextColor) {
+            this.TextColor = new SWFRGBA(bs);
+        }
+        if (this.HasMaxLength) {
+            this.MaxLength = bs.getUI16LE();
+        }
+        if (this.HasLayout) {
+            this.Align = bs.getUI8();
+            this.LeftMargin = bs.getUI16LE();
+            this.RightMargin = bs.getUI16LE();
+            this.Indent = bs.getUI16LE();
+            this.Leading = bs.getUI16LE();
+        }
+        this.VariableName = bs.getDataUntil("\0"); // STRING
+        if (this.HasText) {
+            this.InitialText = bs.getDataUntil("\0"); // STRING
+        }
+    }
+    this.build = function(bs) {
+        bs.putUI16LE(this.CharacterID);
+        this.Bound.build(bs);
+        // flag check
+        this.HasFont      = (this.FontID)?1:0;
+        this.HasFontClass = (this.FontClass)?1:0;
+        this.HasTextColor = (this.TextColor)?1:0;
+        this.HasMaxLength = (this.MaxLength)?1:0;
+        this.HasLayout    = (this.Align)?1:0;
+        this.HasText      = (this.InitialText)?1:0;
+        bs.putUI8(this.HasText      << 7 |
+                  this.WordWrap     << 6 |
+                  this.Multiline    << 3 |
+                  this.Password     << 4 |
+                  this.ReadOnly     << 3 |
+                  this.HasTextColor << 2 |
+                  this.HasMaxLength << 1 |
+                  this.HasFont);
+        bs.putUI8(this.HasFontClass << 7 |
+                  this.AutoSize     << 6 |
+                  this.HasLayout    << 5 |
+                  this.NoSelect     << 4 |
+                  this.Border       << 3 |
+                  this.WasStatic    << 2 |
+                  this.HTML         << 1 |
+                  this.UseOutlines);
+        if (this.HasFont) {
+            bs.putUI16LE(this.FontID);
+            if (this.HasFontClass) { // can't be true if hasFont is true
+                bs.putData(this.FontClass+"\0"); // STRING
+            }
+            bs.putUI16LE(this.FontHeight);
+        }
+        if (this.HasTextColor) {
+            this.TextColor.build(bs);
+        }
+        if (this.HasMaxLength) {
+            bs.putUI16LE(this.MaxLength);
+        }
+        if (this.HasLayout) {
+            bs.putUI8(this.Align);
+            bs.putUI16LE(this.LeftMargin);
+            bs.putUI16LE(this.RightMargin);
+            bs.putUI16LE(this.Indent);
+            bs.putUI16LE(this.Leading);
+        }
+        bs.putData(this.VariableName+"\0"); // STRING
+        if (this.HasText) {
+            bs.putDat(this.InitialText+"\0"); // STRING
+        }
+    }
+}
+
+var SWFDefineSprite = function(bs, tag_code, length) { // code:39
+    if (bs) {
+        var parser = new SWFParser(null);
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+	this.SpriteID = bs.getUI16LE();
+	this.FrameCount = bs.getUI16LE();
+        this.ControlTags = parser.parseTags(bs);
+    }
+    this.build = function(bs) {
+        var builder = new SWFBuilder(null);
+        bs.putUI16LE(this.SpriteID);
+        bs.putUI16LE(this.FrameCount);
+        builder.buildTags(bs, this.ControlTags);
+    }
+}
+
+var SWFFrameLabel = function(bs, tag_code, length) { // code:43
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length = length;
+        this.Name = bs.getDataUntil("\0");
+    }
+    this.build = function(bs) {
+        bs.putData(this.Name);
+        bs.putUI8(0);
+    }
+}
+
+var SWFDefineMorphShape = function(bs, tag_code, length) { // 46
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
+	this.CharacterId = bs.getUI16LE();
+	this.StartBounds = new SWFRECT(bs);
+	this.EndBounds = new SWFRECT(bs);
+        var offsetOfOffset = bs.getOffset();
+	this.Offset = bs.getUI32LE();
+        this.MorphFillStyles = new SWFMORPHFILLSTYLEARRAY(bs, tag_code);
+        this.MorphLineStyles = new SWFMORPHLINESTYLEARRAY(bs, tag_code);
+	this.StartEdges = new SWFSHAPE(bs, tag_code);
+        var offsetOfEndEdges = bs.getOffset();
+        if (offsetOfEndEdges.byte_offset != offsetOfOffset.byte_offset + this.Offset + 4) {
+            console.warn("DefineMorphShape CharacterId("+ this.CharacterId+"): offsetOfEndEdges.byte_offset("+offsetOfEndEdges.byte_offset+") != offsetOfOffset.byte_offset("+offsetOfOffset.byte_offset+") + this.Offset("+this.Offset+") + 4");
+            bs.setOffset(offsetOfOffset.byte_offset + this.Offset + 4, 0);
+        }
+	this.EndEdges = new SWFSHAPE(bs, tag_code);
+    }
+    this.build = function(bs) {
+	bs.putUI16LE(this.CharacterId);
+	this.StartBounds.build(bs);
+	this.EndBounds.build(bs);
+        var offsetOfOffset = bs.getOffset();
+        bs.byteAlign();
+        var offsetOfOffsetField = bs.getOffset();
+        bs.putUI32LE(0); // Offset dummy
+        this.MorphFillStyles.build(bs, tag_code);
+        this.MorphLineStyles.build(bs, tag_code);
+        var currentNumBits = {};
+        currentNumBits.FillBits = bs.need_bits_unsigned(this.MorphFillStyles.FillStyles.length);
+        currentNumBits.LineBits = bs.need_bits_unsigned(this.MorphLineStyles.LineStyles.length);
+	this.StartEdges.build(bs, tag_code, currentNumBits);
+        var offsetOfEndEges = bs.getOffset();
+        this.Offset = offsetOfEndEges.byte_offset - offsetOfOffset.byte_offset - 4;
+        bs.setUI32LE(this.Offset, offsetOfOffsetField.byte_offset);
+        var currentNumBits = {FillBits:0, LineBits:0};
+	this.EndEdges.build(bs, tag_code, currentNumBits);
+    }
+}
+
+var SWFMORPHFILLSTYLE = function(bs, tag_code) {
+    if (bs) {
+	this.FillStyleType =  bs.getUI8();
+	switch (this.FillStyleType) {
+	case 0x00: // solid fill
+            this.StartColor = new SWFRGBA(bs);
+            this.EndColor = new SWFRGBA(bs);
+	    break;
+	case 0x10: // linear gradient fill
+	case 0x12: // radial gradient fill
+	    this.StartGradientMatrix = new SWFMATRIX(bs);
+	    this.EndGradientMatrix = new SWFMATRIX(bs);
+	    this.Gradient = new SWFMORPHGRADIENT(bs, tag_code);
+	    break;
+	case 0x13: // focal radial gradient fill
+	    this.StartGradientMatrix = new SWFMATRIX(bs);
+	    this.EndGradientMatrix = new SWFMATRIX(bs);
+	    this.Gradient = new SWFFOCALGRADIENT(bs, tag_code);
+	    break;
+	case 0x40: // repeating bitmap fill
+	case 0x41: // clipped bitmap fill
+	case 0x42: // non-smoothed repeating bitmap
+	case 0x43: // non-smoothed clipped bitmap
+	    this.BitmapId = bs.getUI16LE();
+	    this.StartBitmapMatrix = new SWFMATRIX(bs);
+	    this.EndBitmapMatrix = new SWFMATRIX(bs);
+	    break;
+	}
+    }
+    this.build = function(bs) {
+	bs.putUI8(this.FillStyleType);
+	switch (this.FillStyleType) {
+	case 0x00: // solid fill
+            this.StartColor.build(bs);
+            this.EndColor.build(bs);
+	    break;
+	case 0x10: // linear gradient fill
+	case 0x12: // radial gradient fill
+	case 0x13: // focal radial gradient fill
+	    this.StartGradientMatrix.build(bs);
+	    this.EndGradientMatrix.build(bs);
+	    this.Gradient.build(bs);
+	    break;
+	case 0x40: // repeating bitmap fill
+	case 0x41: // clipped bitmap fill
+	case 0x42: // non-smoothed repeating bitmap
+	case 0x43: // non-smoothed clipped bitmap
+	    bs.putUI16LE(this.BitmapId);
+	    this.StartBitmapMatrix.build(bs);
+	    this.EndBitmapMatrix.build(bs);
+	    break;
+	}
+    }
+}
+
+var SWFMORPHGRADIENT = function(bs, tag_code) {
+    if (bs) {
+	var numGradients = bs.getUI8();
+	this.NumGradients = numGradients;
+	var gradientRecords = [];
+	for (i = 0 ; i < numGradients ; i++) {
+	    gradientRecords.push(new SWFMORPHGRADRECORD(bs, tag_code));
+	}
+	this.GradientRecords = gradientRecords;
+    }
+    this.build = function(bs) {
+        var gradientRecords = this.GradientRecords;
+        var numGradients = gradientRecords.length;
+        bs.putUI8(numGradients);
+	for (i = 0 ; i < numGradients ; i++) {
+	    gradientRecords[i].build(bs);
+	}
+    }
+}
+
+var SWFMORPHGRADRECORD = function(bs, tag_code) {
+    this.StartRatio = bs.getUI8();
+    this.StartColor = new SWFRGBA(bs);
+    this.EndRatio = bs.getUI8();
+    this.EndColor = new SWFRGBA(bs);
+    this.build = function(bs) {
+        bs.putUI8(this.StartRatio);
+        this.StartColor.build(bs);
+        bs.putUI8(this.EndRatio);
+        this.EndColor.build(bs);
+    }
+}
+
+var SWFMORPHLINESTYLE = function(bs, tag_code) {
+    if (bs) {
+        this.StartWidth = bs.getUI16LE();
+        this.EndWidth = bs.getUI16LE();
+        this.StartColor = new SWFRGBA(bs);
+        this.EndColor = new SWFRGBA(bs);
+    }
+    this.build = function(bs) {
+	bs.putUI16LE(this.StartWidth);
+	bs.putUI16LE(this.EndWidth);
+        this.StartColor.build(bs);
+        this.EndColor.build(bs);
+    }
+}
+
+var SWFMORPHFILLSTYLEARRAY = function(bs, tag_code) {
+    if (bs) {
+	var fillStyleCount = bs.getUI8();
+	if (fillStyleCount === 0xff) {
+	    fillStyleCount = bs.getUI16LE();
+	}
+	this.FillStyleCount = fillStyleCount;
+	var fillStyles = [];
+	for (var i = 0 ; i < fillStyleCount ; i++) {
+	    fillStyles.push(new SWFMORPHFILLSTYLE(bs, tag_code));
+	}
+	this.FillStyles = fillStyles;
+    }
+    this.build = function(bs, tag_code) {
+        fillStyleCount = this.FillStyles.length;
+	if (fillStyleCount < 0xff) {
+            bs.putUI8(fillStyleCount);
+	} else {
+            bs.putUI8(0xff);
+	    bs.putUI16LE(fillStyleCount);
+        }
+	for (var i = 0 ; i < fillStyleCount ; i++) {
+	    fillStyles[i].build(bs);
+	}
+    }
+}
+
+var SWFMORPHLINESTYLEARRAY = function(bs, tag_code) {
+    if (bs) {
+	var lineStyleCount = bs.getUI8();
+	if (lineStyleCount === 0xff) {
+	    lineStyleCount = bs.getUI16LE();
+	}
+	this.LineStyleCount = lineStyleCount;
+	var lineStyles = [];
+	for (var i = 0 ; i < lineStyleCount ; i++) {
+	    lineStyles.push(new SWFMORPHLINESTYLE(bs, tag_code));
+	}
+	this.LineStyles = lineStyles;
+    }
+    this.build = function(bs, tag_code) {
+        lineStyleCount = this.LineStyles.length;
+	if (lineStyleCount < 0xff) {
+            bs.putUI8(lineStyleCount);
+	} else {
+            bs.putUI8(0xff);
+	    bs.putUI16LE(lineStyleCount);
+        }
+	for (var i = 0 ; i < lineStyleCount ; i++) {
+	    lineStyles[i].build(bs);
+	}
+    }
+}
+
+var SWFUnknownTag = function(bs, tag_code, length) { // code:etc
+    if (bs) {
+        this.tag_code = tag_code;
+        this.tag_length =  length;
 	this.data = bs.getData(length);
     }
     this.build = function(bs) {

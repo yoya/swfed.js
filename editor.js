@@ -1,3 +1,7 @@
+/*
+ * 2012/01/03- (c) yoya@awm.jp
+ */
+
 // var SWFScheduler = function(url) { ; }
 
 var SWFEditor = function() {
@@ -22,10 +26,11 @@ var SWFEditor = function() {
 	console.log(swfmovieheader);
 	for (var i = 0, n = swftags.length ; i < n ; i++) {
 	    swftag = swftags[i];
-	    console.log('code:'+swftag.tag_code+' length:'+swftag.length);
-	    if (swftag.data) {
-		console.log(swftag.data);
-	    }
+	    if (swftag) {
+		console.log(swftag);
+	    } else {
+		console.log("no swftag");
+            }
 	}
     }
     this.output = function() {
