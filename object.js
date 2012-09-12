@@ -936,11 +936,11 @@ var SWFPlaceObject = function(bs, tag_code, length) { // code:4, 26
         this.tag_code = tag_code;
         this.tag_length =  length;
         if (tag_code === 4) { // PlaceObject
-            var byteOffset = bs.byte_offset;
+            var byteOffset = bs.byteOffset;
             this.CharacterId = bs.getUI16LE();
             this.Depth = bs.getUI16LE();
             this.Matrix = new SWFMATRIX(bs);
-            if (byteOffset + length < bs.byte_offset) {
+            if (byteOffset + length < bs.byteOffset) {
                 this.Colortransform = new SWFCXFORM(bs);
             }
         } else { // PlaceObject2
@@ -1210,13 +1210,13 @@ var SWFDefineFont = function(bs, tag_code, length) { // code:10,48
             var offsetOfOffsetTable = [];
             if (this.FontFlagsWideOffsets) {
                 for (var i = 0 ; i < numGlyphs ; i++) {
-                    offsetOfOffsetTable.push(bs.getOffset().byte_offset);
+                    offsetOfOffsetTable.push(bs.getOffset().byteOffset);
                     bs.putUI32LE(0); // dummy
                 }
                 bs.putUI32LE(0); // CodeTableOffset dummy
             } else {
                 for (var i = 0 ; i < numGlyphs ; i++) {
-                    offsetOfOffsetTable.push(bs.getOffset().byte_offset);
+                    offsetOfOffsetTable.push(bs.getOffset().byteOffset);
                     bs.putUI16LE(0); // dummy
                 }
                 var offsetOfCodeTableOffset = bs.getOffset();
@@ -1441,9 +1441,9 @@ var SWFDefineMorphShape = function(bs, tag_code, length) { // 46
         this.MorphLineStyles = new SWFMORPHLINESTYLEARRAY(bs, tag_code);
 	this.StartEdges = new SWFSHAPE(bs, tag_code);
         var offsetOfEndEdges = bs.getOffset();
-        if (offsetOfEndEdges.byte_offset != offsetOfOffset.byte_offset + this.Offset + 4) {
-            console.warn("DefineMorphShape CharacterId("+ this.CharacterId+"): offsetOfEndEdges.byte_offset("+offsetOfEndEdges.byte_offset+") != offsetOfOffset.byte_offset("+offsetOfOffset.byte_offset+") + this.Offset("+this.Offset+") + 4");
-            bs.setOffset(offsetOfOffset.byte_offset + this.Offset + 4, 0);
+        if (offsetOfEndEdges.byteOffset != offsetOfOffset.byteOffset + this.Offset + 4) {
+            console.warn("DefineMorphShape CharacterId("+ this.CharacterId+"): offsetOfEndEdges.byteOffset("+offsetOfEndEdges.byteOffset+") != offsetOfOffset.byteOffset("+offsetOfOffset.byteOffset+") + this.Offset("+this.Offset+") + 4");
+            bs.setOffset(offsetOfOffset.byteOffset + this.Offset + 4, 0);
         }
 	this.EndEdges = new SWFSHAPE(bs, tag_code);
     }
@@ -1462,8 +1462,8 @@ var SWFDefineMorphShape = function(bs, tag_code, length) { // 46
         currentNumBits.LineBits = bs.need_bits_unsigned(this.MorphLineStyles.LineStyles.length);
 	this.StartEdges.build(bs, tag_code, currentNumBits);
         var offsetOfEndEges = bs.getOffset();
-        this.Offset = offsetOfEndEges.byte_offset - offsetOfOffset.byte_offset - 4;
-        bs.setUI32LE(this.Offset, offsetOfOffsetField.byte_offset);
+        this.Offset = offsetOfEndEges.byteOffset - offsetOfOffset.byteOffset - 4;
+        bs.setUI32LE(this.Offset, offsetOfOffsetField.byteOffset);
         var currentNumBits = {FillBits:0, LineBits:0};
 	this.EndEdges.build(bs, tag_code, currentNumBits);
     }

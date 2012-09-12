@@ -48,7 +48,7 @@ var SWFParser = function(editor) {
 	    editor.main(this.swfheader, this.swfmovieheader, this.swftags);
 	} else {
 	    if (editor.progress && this.swfheader) {
-		editor.progress(this.bs.byte_offset, this.swfheader.FileLength);
+		editor.progress(this.bs.byteOffset, this.swfheader.FileLength);
 	    }
 	}
     }
@@ -65,7 +65,7 @@ var SWFParser = function(editor) {
         var swftags = [];
 	while (true) {
 	    bs.byteAlign();
-	    var tag_start_offset = bs.getOffset().byte_offset;
+	    var tag_start_offset = bs.getOffset().byteOffset;
 	    var data_length = bs.data.length;
 	    if (tag_start_offset + 2 > data_length) {
 		break;
@@ -87,7 +87,7 @@ var SWFParser = function(editor) {
 		bs.setOffset(tag_start_offset, 0);
 		break;
 	    }
-	    var tag_data_start_offset = bs.byte_offset;
+	    var tag_data_start_offset = bs.byteOffset;
 	    var tag = null;
 	    switch (tag_code) {
 	    case 0: // ShowFrame
