@@ -233,6 +233,8 @@ SWFLANGCODE.prototype.toString = function() {
         codetext = "Traditional Chinese";
         break;
     default:
+        codetext = "Unknown";
+        break;
     }
     return "{LanguageCode:"+this.LanguageCode+"("+codetext+")";
 }
