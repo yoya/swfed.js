@@ -43,7 +43,7 @@ var SWFTagNames = {
     57:"ImportAssets",
     58:"EnableDebugger",
     59:"DoInitAction",
-    60:"DefineBideoStream",
+    60:"DefineVideoStream",
     61:"VideoFrame",
     88:"DefineFontName",
 };
